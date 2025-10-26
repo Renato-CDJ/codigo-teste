@@ -8,10 +8,26 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { Calendar } from "@/components/ui/calendar"
 import { getTabulations, getSituations, getChannels } from "@/lib/store"
-import { StickyNote, Tags, AlertCircle, Radio, List, Search, CalendarIcon } from "lucide-react"
+import {
+  StickyNote,
+  Tags,
+  AlertCircle,
+  Radio,
+  List,
+  Search,
+  CalendarIcon,
+  CheckCircle2,
+  Info,
+  CreditCard,
+  Building2,
+  Home,
+} from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { PromiseCalendar } from "@/components/promise-calendar"
+import { getMaxPromiseDate, isBusinessDay } from "@/lib/business-days"
+
+type ProductType = "cartao" | "comercial" | "habitacional"
 
 interface OperatorSidebarProps {
   isOpen: boolean
@@ -66,6 +82,63 @@ export const OperatorSidebar = memo(function OperatorSidebar({ isOpen }: Operato
   const [tabulations, setTabulations] = useState(getTabulations())
   const [situations, setSituations] = useState(getSituations().filter((s) => s.isActive))
   const [channels, setChannels] = useState(getChannels().filter((c) => c.isActive))
+
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null)
+  const [hoveredProduct, setHoveredProduct] = useState<ProductType | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const getProductDetails = useCallback((productType: ProductType) => {
+    switch (productType) {
+      case "cartao":
+        return {
+          name: "Cartão fase 1",
+          deadline: 6,
+          icon: CreditCard,
+          color: "#007bff",
+        }
+      case "comercial":
+        return {
+          name: "Comercial",
+          deadline: 9,
+          icon: Building2,
+          color: "#28a745",
+        }
+      case "habitacional":
+        return {
+          name: "Habitacional",
+          deadline: 9,
+          icon: Home,
+          color: "#17a2b8",
+        }
+    }
+  }, [])
+
+  const maxDate = useMemo(() => {
+    if (!selectedProduct) return undefined
+    const productInfo = getProductDetails(selectedProduct)
+    if (!productInfo) return undefined
+    // Use the utility function from "@/lib/business-days"
+    return getMaxPromiseDate(today, productInfo.deadline)
+  }, [selectedProduct, today, getProductDetails])
+
+  const isDateInRange = useCallback(
+    (date: Date): boolean => {
+      const normalizedDate = new Date(date)
+      normalizedDate.setHours(0, 0, 0, 0)
+      if (!maxDate) return false
+      return normalizedDate >= today && normalizedDate <= maxDate
+    },
+    [today, maxDate],
+  )
+
+  const handleProductSelect = (productType: ProductType) => {
+    setSelectedProduct(productType)
+    setSelectedDate(undefined) // Reset selected date when product changes
+    setHoveredProduct(null)
+  }
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout
@@ -329,7 +402,208 @@ export const OperatorSidebar = memo(function OperatorSidebar({ isOpen }: Operato
           </Card>
         )}
 
-        {activeSection === "calendar" && <PromiseCalendar />}
+        {activeSection === "calendar" && (
+          <Card className="bg-gradient-to-br from-slate-700/60 to-slate-800/60 dark:from-slate-800/80 dark:to-slate-900/80 border-slate-600/50 dark:border-slate-700/50 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-sm text-orange-400 dark:text-orange-300 flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                Calendário de Promessas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-200 dark:text-slate-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-orange-400 dark:text-orange-300" />
+                  Tipo de Produto
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {[
+                    {
+                      value: "cartao" as ProductType,
+                      name: "Cartão fase 1",
+                      deadline: "até 6 dias úteis",
+                      icon: CreditCard,
+                    },
+                    {
+                      value: "comercial" as ProductType,
+                      name: "Comercial",
+                      deadline: "até 9 dias úteis",
+                      icon: Building2,
+                    },
+                    {
+                      value: "habitacional" as ProductType,
+                      name: "Habitacional",
+                      deadline: "até 9 dias úteis",
+                      icon: Home,
+                    },
+                  ].map((product) => {
+                    const Icon = product.icon
+                    const isSelected = selectedProduct === product.value
+                    const isHovered = hoveredProduct === product.value
+                    return (
+                      <div key={product.value} className="relative">
+                        <button
+                          onClick={() => handleProductSelect(product.value)}
+                          onMouseEnter={() => setHoveredProduct(product.value)}
+                          onMouseLeave={() => setHoveredProduct(null)}
+                          className={`w-full p-2 rounded-lg border-2 transition-all duration-200 hover:shadow-md text-left ${
+                            isSelected
+                              ? "border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-slate-700/60 shadow-md scale-[1.02]"
+                              : "border-slate-600/50 dark:border-slate-700/50 bg-slate-600/40 dark:bg-slate-700/40 hover:border-orange-300 dark:hover:border-orange-500/50"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`p-1.5 rounded-lg ${isSelected ? "bg-orange-500 dark:bg-orange-400" : "bg-slate-500/50 dark:bg-slate-600/50"}`}
+                            >
+                              <Icon
+                                className={`h-3.5 w-3.5 ${
+                                  isSelected ? "text-white" : "text-slate-300 dark:text-slate-400"
+                                }`}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className={`font-semibold text-xs ${
+                                  isSelected
+                                    ? "text-orange-600 dark:text-orange-300"
+                                    : "text-slate-200 dark:text-slate-300"
+                                }`}
+                              >
+                                {product.name}
+                              </p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500">{product.deadline}</p>
+                            </div>
+                            {isSelected && (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400 flex-shrink-0" />
+                            )}
+                          </div>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {!selectedProduct ? (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 p-2.5 bg-blue-50 dark:bg-blue-950/30 border-l-4 border-blue-500 rounded-md">
+                    <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-900 dark:text-blue-100 font-medium">
+                      Selecione um tipo de produto acima para visualizar as datas disponíveis
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {maxDate && (
+                    <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 border-l-4 border-emerald-500 rounded-md p-2.5">
+                      <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-200 mb-1 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Data Máxima
+                      </p>
+                      <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                        {maxDate.toLocaleDateString("pt-BR", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 px-2 py-1.5 bg-slate-600/50 dark:bg-slate-700/50 rounded-md">
+                      <CalendarIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <p className="text-xs font-semibold text-slate-200 dark:text-slate-300">Datas Disponíveis</p>
+                    </div>
+                    <div className="flex justify-center p-3 bg-slate-600/40 dark:bg-slate-700/40 rounded-lg border border-slate-600/50 dark:border-slate-700/50">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        // Use the utility function from "@/lib/business-days" to check if a date is a business day and within range
+                        disabled={(date) => !isBusinessDay(date) || !isDateInRange(date)}
+                        className="rounded-lg scale-90"
+                        modifiers={{
+                          available: (date) =>
+                            isBusinessDay(date) && isDateInRange(date) && date.getTime() !== today.getTime(),
+                        }}
+                        modifiersClassNames={{
+                          available:
+                            "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 font-semibold hover:bg-emerald-200 dark:hover:bg-emerald-800 border-2 border-emerald-400 dark:border-emerald-600",
+                        }}
+                        classNames={{
+                          day_today:
+                            "bg-orange-500 dark:bg-orange-400 text-white dark:text-white font-bold ring-2 ring-orange-400 dark:ring-orange-500",
+                          day_selected:
+                            "bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white font-bold hover:bg-emerald-700 dark:hover:bg-emerald-600 ring-2 ring-emerald-400 dark:ring-emerald-600",
+                          day_disabled: "text-slate-400 dark:text-slate-600 opacity-30 line-through cursor-not-allowed",
+                          months: "flex flex-col space-y-2",
+                          month: "space-y-2 w-full",
+                          caption: "flex justify-center pt-1 relative items-center",
+                          caption_label: "text-xs font-semibold text-slate-200 dark:text-slate-300",
+                          nav: "space-x-1 flex items-center",
+                          nav_button:
+                            "h-6 w-6 bg-transparent p-0 opacity-50 hover:opacity-100 hover:bg-slate-600/50 dark:hover:bg-slate-700/50 rounded-md transition-colors",
+                          table: "w-full border-collapse",
+                          head_cell: "text-slate-400 dark:text-slate-500 rounded-md w-8 font-semibold text-[10px]",
+                          cell: "h-8 w-8 text-center text-xs p-0 relative",
+                          day: "h-8 w-8 p-0 font-medium text-xs hover:bg-slate-600/50 dark:hover:bg-slate-700/50 rounded-md transition-colors text-slate-200 dark:text-slate-300",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {selectedDate && (
+                    <div className="bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/40 dark:to-green-900/40 border-l-4 border-emerald-500 rounded-md p-2.5">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <p className="text-xs font-bold text-emerald-900 dark:text-emerald-100">Data Selecionada</p>
+                      </div>
+                      <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300 ml-5">
+                        {selectedDate.toLocaleDateString("pt-BR", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="bg-slate-600/50 dark:bg-slate-700/50 rounded-md p-2.5 space-y-2 border border-slate-600/50 dark:border-slate-700/50">
+                    <p className="font-semibold text-xs text-slate-200 dark:text-slate-300 flex items-center gap-1.5">
+                      <Info className="h-3.5 w-3.5" />
+                      Legenda
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 bg-orange-500 dark:bg-orange-400 text-white rounded-md ring-2 ring-orange-400 dark:ring-orange-500 flex items-center justify-center text-[10px] font-bold">
+                          H
+                        </div>
+                        <span className="text-[10px] font-medium text-slate-200 dark:text-slate-300">Hoje</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 bg-emerald-100 dark:bg-emerald-900/50 border-2 border-emerald-400 dark:border-emerald-600 rounded-md"></div>
+                        <span className="text-[10px] font-medium text-slate-200 dark:text-slate-300">Disponível</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 bg-emerald-600 dark:bg-emerald-500 rounded-md ring-2 ring-emerald-400 dark:ring-emerald-600"></div>
+                        <span className="text-[10px] font-medium text-slate-200 dark:text-slate-300">Selecionada</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 bg-slate-500/50 dark:bg-slate-600/50 line-through rounded-md border-2 opacity-30"></div>
+                        <span className="text-[10px] font-medium text-slate-200 dark:text-slate-300">Indisponível</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Dialog open={showTabulationFullView} onOpenChange={setShowTabulationFullView}>

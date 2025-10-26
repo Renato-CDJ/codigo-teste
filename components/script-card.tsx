@@ -326,7 +326,7 @@ export const ScriptCard = memo(function ScriptCard({
           variant="outline"
           size="sm"
           onClick={handleTabulationOpen}
-          className={`absolute top-4 right-4 md:top-6 md:right-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-white dark:to-gray-100 dark:hover:from-gray-100 dark:hover:to-white text-white dark:text-black font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 z-10 text-xs md:text-sm hover:scale-110 active:scale-95 ${
+          className={`absolute top-4 right-4 md:top-6 md:right-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-white dark:to-gray-100 dark:hover:from-gray-100 dark:hover:to-white text-white dark:text-black font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 z-20 text-xs md:text-sm hover:scale-110 active:scale-95 ${
             showTabulationPulse ? "animate-bounce" : ""
           }`}
         >
@@ -353,7 +353,7 @@ export const ScriptCard = memo(function ScriptCard({
 
         <CardContent className="space-y-6 pb-8 px-6 md:px-10 relative z-10">
           <div
-            className="bg-gradient-to-br from-slate-600/40 via-slate-700/40 to-slate-600/40 dark:from-slate-700/60 dark:via-slate-800/60 dark:to-slate-700/60 rounded-2xl p-8 md:p-12 leading-relaxed min-h-[300px] md:min-h-[360px] border-2 border-slate-600/50 dark:border-slate-700/60 shadow-inner backdrop-blur-sm transition-all duration-300 hover:border-orange-400/40 dark:hover:border-orange-500/30"
+            className="bg-white dark:bg-gradient-to-br dark:from-slate-700/60 dark:via-slate-800/60 dark:to-slate-700/60 rounded-2xl p-8 md:p-12 leading-relaxed min-h-[300px] md:min-h-[360px] border-2 border-orange-400/60 dark:border-slate-700/60 shadow-inner backdrop-blur-sm transition-all duration-300 hover:border-orange-400/80 dark:hover:border-orange-500/30"
             style={contentStyles}
           >
             {typeof renderedContent === "string" ? (
