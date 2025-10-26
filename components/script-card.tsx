@@ -268,7 +268,7 @@ export const ScriptCard = memo(function ScriptCard({
   return (
     <div className="space-y-4 w-full max-w-7xl mx-auto">
       {showControls && (
-        <div className="py-4 px-3 md:px-6 bg-gradient-to-r from-slate-700/50 to-slate-800/50 dark:from-slate-800/60 dark:to-slate-900/60 rounded-xl backdrop-blur-sm border border-slate-600/30 dark:border-slate-700/50 shadow-lg">
+        <div className="py-4 px-3 md:px-6 bg-transparent rounded-xl backdrop-blur-sm border border-slate-600/30 dark:border-slate-700/50 shadow-lg">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center max-w-4xl mx-auto">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
               <label className="text-xs md:text-sm font-bold text-foreground whitespace-nowrap min-w-fit flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
@@ -283,7 +283,7 @@ export const ScriptCard = memo(function ScriptCard({
                 step={5}
                 className="flex-1 w-full [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-orange-500 [&_[role=slider]]:to-amber-500 dark:[&_[role=slider]]:from-orange-500 dark:[&_[role=slider]]:to-orange-600 [&_[role=slider]]:border-orange-600 dark:[&_[role=slider]]:border-orange-500 [&_[role=slider]]:h-6 [&_[role=slider]]:w-6 [&_[role=slider]]:shadow-lg [&_[role=slider]]:transition-all [&_[role=slider]]:hover:scale-110 [&_.bg-primary]:bg-gradient-to-r [&_.bg-primary]:from-orange-400 [&_.bg-primary]:to-amber-400 dark:[&_.bg-primary]:from-orange-500 dark:[&_.bg-primary]:to-orange-600"
               />
-              <span className="text-xs font-bold text-orange-500 dark:text-orange-400 min-w-[3rem] text-right bg-slate-700/50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg">
+              <span className="text-xs font-bold text-orange-500 dark:text-orange-400 min-w-[3rem] text-right bg-transparent px-3 py-1.5 rounded-lg border border-slate-600/30 dark:border-slate-700/50">
                 {textSize[0]}%
               </span>
             </div>
@@ -300,7 +300,7 @@ export const ScriptCard = memo(function ScriptCard({
                 step={5}
                 className="flex-1 w-full [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-orange-500 [&_[role=slider]]:to-amber-500 dark:[&_[role=slider]]:from-orange-500 dark:[&_[role=slider]]:to-orange-600 [&_[role=slider]]:border-orange-600 dark:[&_[role=slider]]:border-orange-500 [&_[role=slider]]:h-6 [&_[role=slider]]:w-6 [&_[role=slider]]:shadow-lg [&_[role=slider]]:transition-all [&_[role=slider]]:hover:scale-110 [&_.bg-primary]:bg-gradient-to-r [&_.bg-primary]:from-orange-400 [&_.bg-primary]:to-amber-400 dark:[&_.bg-primary]:from-orange-500 dark:[&_.bg-primary]:to-orange-600"
               />
-              <span className="text-xs font-bold text-orange-500 dark:text-orange-400 min-w-[3rem] text-right bg-slate-700/50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg">
+              <span className="text-xs font-bold text-orange-500 dark:text-orange-400 min-w-[3rem] text-right bg-transparent px-3 py-1.5 rounded-lg border border-slate-600/30 dark:border-slate-700/50">
                 {buttonSize[0]}%
               </span>
             </div>
@@ -313,20 +313,20 @@ export const ScriptCard = memo(function ScriptCard({
           variant="outline"
           size="sm"
           onClick={onGoBack}
-          className="fixed left-3 md:left-6 top-1/2 -translate-y-1/2 z-50 shadow-2xl hover:shadow-3xl bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 text-white border-0 h-12 w-12 md:h-14 md:w-14 p-0 rounded-full transition-all duration-200 hover:scale-125 active:scale-95 shadow-orange-500/20 hover:shadow-orange-500/40"
+          className="fixed left-3 md:left-6 top-1/2 -translate-y-1/2 z-50 shadow-2xl hover:shadow-3xl bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 text-white border-0 h-12 w-12 md:h-14 md:w-14 p-0 rounded-full transition-all duration-200 hover:scale-125 active:scale-95"
         >
           <ArrowLeft className="h-6 w-6 md:h-7 md:w-7" />
         </Button>
       )}
 
-      <Card className="relative shadow-2xl border-2 border-orange-400/60 dark:border-orange-500/50 w-full overflow-hidden backdrop-blur-sm bg-gradient-to-br from-slate-700/40 to-slate-800/40 dark:from-slate-800/60 dark:to-slate-900/60 transition-all duration-300 hover:shadow-orange-500/30 hover:border-orange-400/80">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/5 dark:from-orange-500/3 dark:to-amber-500/3 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+      <Card className="relative shadow-2xl border-2 border-orange-400/60 dark:border-orange-500/50 w-full overflow-hidden backdrop-blur-sm bg-white dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900/60 transition-all duration-300 hover:shadow-orange-500/30 hover:border-orange-400/80">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/5 dark:from-orange-500/3 dark:to-amber-500/3 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
 
         <Button
           variant="outline"
           size="sm"
           onClick={handleTabulationOpen}
-          className={`absolute top-4 right-4 md:top-6 md:right-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-white dark:to-gray-100 dark:hover:from-gray-100 dark:hover:to-white text-white dark:text-black font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 z-10 text-xs md:text-sm hover:scale-110 active:scale-95 ${
+          className={`absolute top-4 right-4 md:top-6 md:right-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 z-20 text-xs md:text-sm hover:scale-110 active:scale-95 pointer-events-auto ${
             showTabulationPulse ? "animate-bounce" : ""
           }`}
         >
@@ -353,7 +353,7 @@ export const ScriptCard = memo(function ScriptCard({
 
         <CardContent className="space-y-6 pb-8 px-6 md:px-10 relative z-10">
           <div
-            className="bg-gradient-to-br from-slate-600/40 via-slate-700/40 to-slate-600/40 dark:from-slate-700/60 dark:via-slate-800/60 dark:to-slate-700/60 rounded-2xl p-8 md:p-12 leading-relaxed min-h-[300px] md:min-h-[360px] border-2 border-slate-600/50 dark:border-slate-700/60 shadow-inner backdrop-blur-sm transition-all duration-300 hover:border-orange-400/40 dark:hover:border-orange-500/30"
+            className="bg-gray-50 dark:bg-gradient-to-br dark:from-slate-700/60 dark:via-slate-800/60 dark:to-slate-700/60 rounded-2xl p-8 md:p-12 leading-relaxed min-h-[300px] md:min-h-[360px] border-2 border-gray-200 dark:border-slate-700/60 shadow-inner backdrop-blur-sm transition-all duration-300 hover:border-orange-400/40 dark:hover:border-orange-500/30"
             style={contentStyles}
           >
             {typeof renderedContent === "string" ? (
@@ -380,7 +380,7 @@ export const ScriptCard = memo(function ScriptCard({
                   className={`font-bold transition-all duration-300 hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl border-0 rounded-xl ${
                     isPrimary
                       ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-orange-500 dark:to-orange-600 dark:hover:from-orange-600 dark:hover:to-orange-700 dark:text-white text-white"
-                      : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 dark:from-orange-500 dark:to-orange-600 dark:hover:from-orange-600 dark:hover:to-orange-700 dark:text-white text-white"
+                      : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 dark:from-orange-500 dark:to-orange-500 dark:hover:from-orange-600 dark:hover:to-orange-700 dark:text-white text-white"
                   }`}
                   style={{
                     fontSize: `${navButtonFontSize}px`,
@@ -399,7 +399,7 @@ export const ScriptCard = memo(function ScriptCard({
         <DialogContent className="sm:max-w-2xl shadow-2xl max-h-[80vh] overflow-y-auto border-2 border-orange-400/60 dark:border-orange-500/50 bg-gradient-to-br from-slate-700/40 to-slate-800/40 dark:from-slate-800/60 dark:to-slate-900/60">
           <DialogHeader className="space-y-3 pb-4 border-b border-slate-600/30 dark:border-slate-700/50">
             <DialogTitle className="flex items-center gap-3 text-xl font-bold">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-400 dark:to-orange-500 shadow-lg">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-500 dark:to-orange-500 shadow-lg">
                 <CheckCircle2 className="h-6 w-6 text-white" />
               </div>
               <span className="bg-gradient-to-r from-orange-400 to-amber-400 dark:from-orange-300 dark:to-amber-300 bg-clip-text text-transparent">
