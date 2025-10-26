@@ -416,7 +416,7 @@ export const OperatorSidebar = memo(function OperatorSidebar({ isOpen }: Operato
                   <CheckCircle2 className="h-3.5 w-3.5 text-orange-400 dark:text-orange-300" />
                   Tipo de Produto
                 </label>
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-3 gap-1.5">
                   {[
                     {
                       value: "cartao" as ProductType,
@@ -446,25 +446,25 @@ export const OperatorSidebar = memo(function OperatorSidebar({ isOpen }: Operato
                           onClick={() => handleProductSelect(product.value)}
                           onMouseEnter={() => setHoveredProduct(product.value)}
                           onMouseLeave={() => setHoveredProduct(null)}
-                          className={`w-full p-2 rounded-lg border-2 transition-all duration-200 hover:shadow-md text-left ${
+                          className={`w-full p-1.5 rounded-lg border-2 transition-all duration-200 hover:shadow-md text-left ${
                             isSelected
                               ? "border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-slate-700/60 shadow-md scale-[1.02]"
                               : "border-slate-600/50 dark:border-slate-700/50 bg-slate-600/40 dark:bg-slate-700/40 hover:border-orange-300 dark:hover:border-orange-500/50"
                           }`}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col items-center gap-1">
                             <div
-                              className={`p-1.5 rounded-lg ${isSelected ? "bg-orange-500 dark:bg-orange-400" : "bg-slate-500/50 dark:bg-slate-600/50"}`}
+                              className={`p-1 rounded-lg ${isSelected ? "bg-orange-500 dark:bg-orange-400" : "bg-slate-500/50 dark:bg-slate-600/50"}`}
                             >
                               <Icon
-                                className={`h-3.5 w-3.5 ${
+                                className={`h-3 w-3 ${
                                   isSelected ? "text-white" : "text-slate-300 dark:text-slate-400"
                                 }`}
                               />
                             </div>
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 text-center">
                               <p
-                                className={`font-semibold text-xs ${
+                                className={`font-semibold text-[10px] leading-tight ${
                                   isSelected
                                     ? "text-orange-600 dark:text-orange-300"
                                     : "text-slate-200 dark:text-slate-300"
@@ -472,10 +472,9 @@ export const OperatorSidebar = memo(function OperatorSidebar({ isOpen }: Operato
                               >
                                 {product.name}
                               </p>
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500">{product.deadline}</p>
                             </div>
                             {isSelected && (
-                              <CheckCircle2 className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400 flex-shrink-0" />
+                              <CheckCircle2 className="h-3 w-3 text-orange-500 dark:text-orange-400 absolute top-0.5 right-0.5" />
                             )}
                           </div>
                         </button>
@@ -572,33 +571,6 @@ export const OperatorSidebar = memo(function OperatorSidebar({ isOpen }: Operato
                       </p>
                     </div>
                   )}
-
-                  <div className="bg-slate-600/50 dark:bg-slate-700/50 rounded-md p-2.5 space-y-2 border border-slate-600/50 dark:border-slate-700/50">
-                    <p className="font-semibold text-xs text-slate-200 dark:text-slate-300 flex items-center gap-1.5">
-                      <Info className="h-3.5 w-3.5" />
-                      Legenda
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 bg-orange-500 dark:bg-orange-400 text-white rounded-md ring-2 ring-orange-400 dark:ring-orange-500 flex items-center justify-center text-[10px] font-bold">
-                          H
-                        </div>
-                        <span className="text-[10px] font-medium text-slate-200 dark:text-slate-300">Hoje</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 bg-emerald-100 dark:bg-emerald-900/50 border-2 border-emerald-400 dark:border-emerald-600 rounded-md"></div>
-                        <span className="text-[10px] font-medium text-slate-200 dark:text-slate-300">Disponível</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 bg-emerald-600 dark:bg-emerald-500 rounded-md ring-2 ring-emerald-400 dark:ring-emerald-600"></div>
-                        <span className="text-[10px] font-medium text-slate-200 dark:text-slate-300">Selecionada</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 bg-slate-500/50 dark:bg-slate-600/50 line-through rounded-md border-2 opacity-30"></div>
-                        <span className="text-[10px] font-medium text-slate-200 dark:text-slate-300">Indisponível</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
             </CardContent>
