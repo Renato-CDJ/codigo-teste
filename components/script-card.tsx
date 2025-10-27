@@ -268,12 +268,12 @@ export const ScriptCard = memo(function ScriptCard({
   return (
     <div className="space-y-4 w-full max-w-7xl mx-auto">
       {showControls && (
-        <div className="py-4 px-3 md:px-6 bg-gradient-to-r from-slate-700/50 to-slate-800/50 dark:from-slate-800/60 dark:to-slate-900/60 rounded-xl backdrop-blur-sm border border-slate-600/30 dark:border-slate-700/50 shadow-lg">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center max-w-4xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-              <label className="text-xs md:text-sm font-bold text-foreground whitespace-nowrap min-w-fit flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+        <div className="py-3 px-2 md:px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-center max-w-4xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+              <label className="text-xs md:text-sm font-semibold text-foreground whitespace-nowrap min-w-fit flex items-center gap-2">
                 <span className="text-base md:text-lg">📝</span>
-                Tamanho do Texto:
+                Texto:
               </label>
               <Slider
                 value={textSize}
@@ -281,16 +281,16 @@ export const ScriptCard = memo(function ScriptCard({
                 min={50}
                 max={120}
                 step={5}
-                className="flex-1 w-full [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-orange-500 [&_[role=slider]]:to-amber-500 dark:[&_[role=slider]]:from-orange-500 dark:[&_[role=slider]]:to-orange-600 [&_[role=slider]]:border-orange-600 dark:[&_[role=slider]]:border-orange-500 [&_[role=slider]]:h-6 [&_[role=slider]]:w-6 [&_[role=slider]]:shadow-lg [&_[role=slider]]:transition-all [&_[role=slider]]:hover:scale-110 [&_.bg-primary]:bg-gradient-to-r [&_.bg-primary]:from-orange-400 [&_.bg-primary]:to-amber-400 dark:[&_.bg-primary]:from-orange-500 dark:[&_.bg-primary]:to-orange-600"
+                className="flex-1 w-full [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-orange-500 [&_[role=slider]]:to-amber-500 dark:[&_[role=slider]]:from-orange-500 dark:[&_[role=slider]]:to-orange-600 [&_[role=slider]]:border-orange-600 dark:[&_[role=slider]]:border-orange-500 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_.bg-primary]:bg-gradient-to-r [&_.bg-primary]:from-orange-400 [&_.bg-primary]:to-amber-400 dark:[&_.bg-primary]:from-orange-500 dark:[&_.bg-primary]:to-orange-600"
               />
-              <span className="text-xs font-bold text-orange-500 dark:text-orange-400 min-w-[3rem] text-right bg-slate-700/50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg">
+              <span className="text-xs font-medium text-muted-foreground min-w-[2.5rem] text-right">
                 {textSize[0]}%
               </span>
             </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-              <label className="text-xs md:text-sm font-bold text-foreground whitespace-nowrap min-w-fit flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+              <label className="text-xs md:text-sm font-semibold text-foreground whitespace-nowrap min-w-fit flex items-center gap-2">
                 <span className="text-base md:text-lg">🔘</span>
-                Tamanho dos Botões:
+                Botões:
               </label>
               <Slider
                 value={buttonSize}
@@ -298,9 +298,9 @@ export const ScriptCard = memo(function ScriptCard({
                 min={50}
                 max={150}
                 step={5}
-                className="flex-1 w-full [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-orange-500 [&_[role=slider]]:to-amber-500 dark:[&_[role=slider]]:from-orange-500 dark:[&_[role=slider]]:to-orange-600 [&_[role=slider]]:border-orange-600 dark:[&_[role=slider]]:border-orange-500 [&_[role=slider]]:h-6 [&_[role=slider]]:w-6 [&_[role=slider]]:shadow-lg [&_[role=slider]]:transition-all [&_[role=slider]]:hover:scale-110 [&_.bg-primary]:bg-gradient-to-r [&_.bg-primary]:from-orange-400 [&_.bg-primary]:to-amber-400 dark:[&_.bg-primary]:from-orange-500 dark:[&_.bg-primary]:to-orange-600"
+                className="flex-1 w-full [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-orange-500 [&_[role=slider]]:to-amber-500 dark:[&_[role=slider]]:from-orange-500 dark:[&_[role=slider]]:to-orange-600 [&_[role=slider]]:border-orange-600 dark:[&_[role=slider]]:border-orange-500 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_.bg-primary]:bg-gradient-to-r [&_.bg-primary]:from-orange-400 [&_.bg-primary]:to-amber-400 dark:[&_.bg-primary]:from-orange-500 dark:[&_.bg-primary]:to-orange-600"
               />
-              <span className="text-xs font-bold text-orange-500 dark:text-orange-400 min-w-[3rem] text-right bg-slate-700/50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg">
+              <span className="text-xs font-medium text-muted-foreground min-w-[2.5rem] text-right">
                 {buttonSize[0]}%
               </span>
             </div>
@@ -313,20 +313,18 @@ export const ScriptCard = memo(function ScriptCard({
           variant="outline"
           size="sm"
           onClick={onGoBack}
-          className="fixed left-3 md:left-6 top-1/2 -translate-y-1/2 z-50 shadow-2xl hover:shadow-3xl bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 text-white border-0 h-12 w-12 md:h-14 md:w-14 p-0 rounded-full transition-all duration-200 hover:scale-125 active:scale-95 shadow-orange-500/20 hover:shadow-orange-500/40"
+          className="fixed left-2 md:left-4 top-1/2 -translate-y-1/2 z-50 shadow-2xl hover:shadow-3xl bg-gradient-to-r from-zinc-700 to-zinc-800 hover:from-zinc-800 hover:to-zinc-900 text-white border-0 h-10 w-10 md:h-12 md:w-12 p-0 rounded-full transition-all duration-200 hover:scale-110"
         >
-          <ArrowLeft className="h-6 w-6 md:h-7 md:w-7" />
+          <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
         </Button>
       )}
 
-      <Card className="relative shadow-2xl border-2 border-orange-400/60 dark:border-orange-500/50 w-full overflow-hidden backdrop-blur-sm bg-gradient-to-br from-slate-700/40 to-slate-800/40 dark:from-slate-800/60 dark:to-slate-900/60 transition-all duration-300 hover:shadow-orange-500/30 hover:border-orange-400/80">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/5 dark:from-orange-500/3 dark:to-amber-500/3 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-
+      <Card className="relative shadow-2xl border-2 border-orange-200/80 dark:border-orange-500/60 w-full overflow-hidden backdrop-blur-sm">
         <Button
           variant="outline"
           size="sm"
           onClick={handleTabulationOpen}
-          className={`absolute top-4 right-4 md:top-6 md:right-6 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-white dark:to-gray-100 dark:hover:from-gray-100 dark:hover:to-white text-white dark:text-black font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 z-20 text-xs md:text-sm hover:scale-110 active:scale-95 ${
+          className={`absolute top-3 right-3 md:top-4 md:right-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-white dark:to-gray-100 dark:hover:from-gray-100 dark:hover:to-white text-white dark:text-black font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 z-10 text-xs md:text-sm ${
             showTabulationPulse ? "animate-bounce" : ""
           }`}
         >
@@ -344,16 +342,16 @@ export const ScriptCard = memo(function ScriptCard({
           )}
         </Button>
 
-        <CardHeader className="pb-6 pt-8 px-6 md:px-10 relative z-10 border-b border-slate-600/30 dark:border-slate-700/50">
+        <CardHeader className="pb-5 pt-7 px-4 md:px-8">
           <CardTitle
-            className="text-2xl md:text-3xl lg:text-4xl text-center font-bold text-balance leading-tight bg-gradient-to-r from-orange-400 to-amber-400 dark:from-orange-300 dark:to-amber-300 bg-clip-text text-transparent drop-shadow-sm"
+            className="text-2xl md:text-3xl lg:text-4xl text-center font-bold text-balance leading-tight text-orange-900 dark:text-white drop-shadow-sm"
             dangerouslySetInnerHTML={{ __html: highlightedTitle }}
           />
         </CardHeader>
 
-        <CardContent className="space-y-6 pb-8 px-6 md:px-10 relative z-10">
+        <CardContent className="space-y-6 pb-8 px-4 md:px-8">
           <div
-            className="bg-white dark:bg-gradient-to-br dark:from-slate-700/60 dark:via-slate-800/60 dark:to-slate-700/60 rounded-2xl p-8 md:p-12 leading-relaxed min-h-[300px] md:min-h-[360px] border-2 border-orange-400/60 dark:border-slate-700/60 shadow-inner backdrop-blur-sm transition-all duration-300 hover:border-orange-400/80 dark:hover:border-orange-500/30"
+            className="bg-gradient-to-br from-orange-50/60 via-amber-50/40 to-orange-50/60 dark:from-gray-600/40 dark:via-gray-600/40 dark:to-gray-600/40 rounded-2xl p-6 md:p-10 leading-relaxed min-h-[280px] md:min-h-[320px] border-2 border-orange-200/60 dark:border-orange-500/40 shadow-inner backdrop-blur-sm"
             style={contentStyles}
           >
             {typeof renderedContent === "string" ? (
@@ -365,8 +363,8 @@ export const ScriptCard = memo(function ScriptCard({
         </CardContent>
       </Card>
 
-      <div className="flex justify-center items-center pt-8 px-2">
-        <div className="flex flex-wrap justify-center gap-4 md:gap-6 w-full max-w-4xl">
+      <div className="flex justify-center items-center pt-6 px-2">
+        <div className="flex flex-wrap justify-center gap-4 md:gap-5 w-full max-w-3xl">
           {step.buttons
             .sort((a, b) => a.order - b.order)
             .map((button) => {
@@ -377,10 +375,10 @@ export const ScriptCard = memo(function ScriptCard({
                   key={button.id}
                   size="lg"
                   onClick={() => onButtonClick(button.nextStepId)}
-                  className={`font-bold transition-all duration-300 hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl border-0 rounded-xl ${
+                  className={`font-bold transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-xl hover:shadow-2xl border-0 rounded-xl ${
                     isPrimary
-                      ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-orange-500 dark:to-orange-600 dark:hover:from-orange-600 dark:hover:to-orange-700 dark:text-white text-white"
-                      : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 dark:from-orange-500 dark:to-orange-600 dark:hover:from-orange-600 dark:hover:to-orange-700 dark:text-white text-white"
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-orange-500 dark:to-orange-600 dark:hover:from-orange-600 dark:hover:to-orange-700 dark:text-white"
+                      : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 dark:from-orange-500 dark:to-orange-600 dark:hover:from-orange-600 dark:hover:to-orange-700 dark:text-white"
                   }`}
                   style={{
                     fontSize: `${navButtonFontSize}px`,
@@ -396,13 +394,13 @@ export const ScriptCard = memo(function ScriptCard({
       </div>
 
       <Dialog open={showTabulation} onOpenChange={setShowTabulation}>
-        <DialogContent className="sm:max-w-2xl shadow-2xl max-h-[80vh] overflow-y-auto border-2 border-orange-400/60 dark:border-orange-500/50 bg-gradient-to-br from-slate-700/40 to-slate-800/40 dark:from-slate-800/60 dark:to-slate-900/60">
-          <DialogHeader className="space-y-3 pb-4 border-b border-slate-600/30 dark:border-slate-700/50">
+        <DialogContent className="sm:max-w-2xl shadow-2xl max-h-[80vh] overflow-y-auto border-2 border-orange-200 dark:border-zinc-700">
+          <DialogHeader className="space-y-3 pb-4 border-b border-border">
             <DialogTitle className="flex items-center gap-3 text-xl font-bold">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-400 dark:to-orange-500 shadow-lg">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-400 dark:to-orange-500">
                 <CheckCircle2 className="h-6 w-6 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-orange-400 to-amber-400 dark:from-orange-300 dark:to-amber-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-orange-600 to-orange-500 dark:from-orange-400 dark:to-orange-300 bg-clip-text text-transparent">
                 Tabulação Recomendada
               </span>
             </DialogTitle>
@@ -415,43 +413,43 @@ export const ScriptCard = memo(function ScriptCard({
               step.tabulations.map((tabulation, index) => (
                 <div
                   key={tabulation.id || index}
-                  className="group relative rounded-xl border-2 border-slate-600 dark:border-slate-600 bg-gradient-to-br from-slate-700/60 to-slate-800/60 dark:from-slate-800/80 dark:to-slate-900/80 p-5 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] hover:border-orange-400/60 dark:hover:border-orange-500/50 overflow-hidden"
+                  className="group relative rounded-xl border-2 border-slate-600 dark:border-slate-600 bg-white dark:bg-slate-700 p-5 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.01] overflow-hidden"
                 >
                   <div className="absolute top-3 right-3 opacity-10 group-hover:opacity-20 transition-opacity">
                     <CheckCircle2 className="h-12 w-12 text-orange-500 dark:text-orange-400" />
                   </div>
                   <div className="relative">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="p-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 dark:from-orange-400 dark:to-orange-500 flex-shrink-0 shadow-md">
+                      <div className="p-1.5 rounded-lg bg-orange-500 dark:bg-orange-400 flex-shrink-0">
                         <CheckCircle2 className="h-4 w-4 text-white" />
                       </div>
-                      <h4 className="font-bold text-lg text-gray-100 dark:text-white leading-tight break-words">
+                      <h4 className="font-bold text-lg text-gray-900 dark:text-white leading-tight break-words">
                         {tabulation.name}
                       </h4>
                     </div>
-                    <p className="text-sm text-gray-300 dark:text-gray-200 leading-relaxed whitespace-pre-wrap pl-9 break-words">
+                    <p className="text-sm text-gray-700 dark:text-gray-100 leading-relaxed whitespace-pre-wrap pl-9 break-words">
                       {tabulation.description}
                     </p>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="rounded-xl border-2 border-slate-600/50 dark:border-slate-700/50 bg-slate-700/30 dark:bg-slate-800/30 p-6 text-center shadow-sm">
+              <div className="rounded-xl border-2 border-muted bg-muted/30 p-6 text-center shadow-sm">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="p-3 rounded-full bg-slate-600/50 dark:bg-slate-700/50">
-                    <CheckCircle2 className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+                  <div className="p-3 rounded-full bg-muted">
+                    <CheckCircle2 className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-slate-300 dark:text-slate-400 leading-relaxed max-w-md">
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
                     Nenhuma tabulação específica recomendada para esta tela. Continue o atendimento normalmente.
                   </p>
                 </div>
               </div>
             )}
           </div>
-          <div className="pt-4 border-t border-slate-600/30 dark:border-slate-700/50">
+          <div className="pt-4 border-t border-border">
             <Button
               onClick={handleTabulationClose}
-              className="w-full h-11 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-orange-500 dark:to-orange-600 dark:hover:from-orange-600 dark:hover:to-orange-700 text-white dark:text-white font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 text-base hover:scale-105 active:scale-95"
+              className="w-full h-11 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 dark:from-orange-500 dark:to-orange-600 dark:hover:from-orange-600 dark:hover:to-orange-700 text-white dark:text-white font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 text-base"
             >
               Entendi
             </Button>
