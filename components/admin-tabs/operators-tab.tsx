@@ -172,7 +172,7 @@ export function OperatorsTab() {
   }
 
   const handleExportReport = () => {
-    // Prepare CSV data
+    // Prepare data for Excel
     const headers = ["Nome", "Quantidade Logins no Dia", "Tempo Conectado", "Último Login"]
     const rows = operators.map((operator) => {
       const todaySessions = getTodayLoginSessions(operator.id)
@@ -195,17 +195,55 @@ export function OperatorsTab() {
       ]
     })
 
-    // Create CSV content
-    const csvContent = [headers.join(","), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(","))].join("\n")
+    // Create Excel-compatible HTML table
+    const htmlTable = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8">
+        <!--[if gte mso 9]>
+        <xml>
+          <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>Relatório Operadores</x:Name>
+                <x:WorksheetOptions>
+                  <x:DisplayGridlines/>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          table { border-collapse: collapse; width: 100%; }
+          th { background-color: #4472C4; color: white; font-weight: bold; padding: 8px; border: 1px solid #ddd; }
+          td { padding: 8px; border: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f2f2f2; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <thead>
+            <tr>
+              ${headers.map((header) => `<th>${header}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `
 
-    // Create blob and download
-    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" })
+    // Create blob and download as Excel file
+    const blob = new Blob([htmlTable], { type: "application/vnd.ms-excel" })
     const link = document.createElement("a")
     const url = URL.createObjectURL(blob)
 
     const today = new Date().toLocaleDateString("pt-BR").replace(/\//g, "-")
     link.setAttribute("href", url)
-    link.setAttribute("download", `relatorio-operadores-${today}.csv`)
+    link.setAttribute("download", `relatorio-operadores-${today}.xls`)
     link.style.visibility = "hidden"
     document.body.appendChild(link)
     link.click()
@@ -213,7 +251,7 @@ export function OperatorsTab() {
 
     toast({
       title: "Relatório exportado",
-      description: "O relatório foi baixado com sucesso",
+      description: "O relatório Excel foi baixado com sucesso",
     })
   }
 

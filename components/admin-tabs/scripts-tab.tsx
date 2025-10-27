@@ -40,6 +40,12 @@ import { useToast } from "@/hooks/use-toast"
 import { AdminScriptPreview } from "@/components/admin-script-preview"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+const AVAILABLE_JSON_FILES = [
+  { name: "Comercial", file: "comercial.json", path: "/data/comercial.json" },
+  { name: "Habitacional 532", file: "hab532.json", path: "/data/hab532.json" },
+  { name: "Habitacional", file: "habitacional-script.json", path: "/data/habitacional-script.json" },
+]
+
 export function ScriptsTab() {
   const [steps, setSteps] = useState<ScriptStep[]>(getScriptSteps())
   const [products, setProducts] = useState<Product[]>(getProducts())
@@ -87,6 +93,50 @@ export function ScriptsTab() {
     },
     {} as Record<string, ScriptStep[]>,
   )
+
+  const handleImportFromDataFolder = async (filePath: string, fileName: string) => {
+    try {
+      const response = await fetch(filePath)
+      if (!response.ok) {
+        throw new Error("Arquivo não encontrado")
+      }
+
+      const data = await response.json()
+
+      const isPhraseology = data.fraseologias && !data.marcas
+
+      if (isPhraseology) {
+        toast({
+          title: "Arquivo de fraseologia detectado",
+          description: "Por favor, use a aba 'Fraseologias' para importar arquivos de fraseologia.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const result = importScriptFromJson(data)
+
+      if (result.stepCount > 0) {
+        refreshSteps()
+        setEditingStep(null)
+        setIsCreating(false)
+        setPreviewStep(null)
+
+        toast({
+          title: "Script importado com sucesso!",
+          description: `${result.productCount} produto(s) e ${result.stepCount} tela(s) foram importados de ${fileName}.`,
+        })
+      } else {
+        throw new Error("Nenhuma tela foi importada")
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao importar",
+        description: `Não foi possível importar o arquivo ${fileName}. Verifique se o arquivo existe e está no formato correto.`,
+        variant: "destructive",
+      })
+    }
+  }
 
   const handleImportScript = () => {
     const input = document.createElement("input")
@@ -396,6 +446,36 @@ export function ScriptsTab() {
             <CardDescription>Exporte seus roteiros como arquivos JSON para backup ou compartilhamento</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
+            <div className="mb-6 pb-6 border-b">
+              <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Importar da Pasta Data</h3>
+              <div className="space-y-2">
+                {AVAILABLE_JSON_FILES.map((jsonFile) => (
+                  <div
+                    key={jsonFile.file}
+                    className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileJson className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <div>
+                        <p className="font-semibold text-sm">{jsonFile.name}</p>
+                        <p className="text-xs text-muted-foreground">{jsonFile.file}</p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleImportFromDataFolder(jsonFile.path, jsonFile.name)}
+                      className="gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Importar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Exportar Roteiros Existentes</h3>
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div>
                 <p className="font-semibold">Todos os Roteiros</p>
