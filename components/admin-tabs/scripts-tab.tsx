@@ -24,6 +24,8 @@ import {
   AlignRight,
   AlignJustify,
   RotateCcw,
+  Download,
+  FileJson,
 } from "lucide-react"
 import {
   getScriptSteps,
@@ -45,6 +47,7 @@ export function ScriptsTab() {
   const [isCreating, setIsCreating] = useState(false)
   const [previewStep, setPreviewStep] = useState<ScriptStep | null>(null)
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set())
+  const [showJsonList, setShowJsonList] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -273,6 +276,89 @@ export function ScriptsTab() {
     }
   }
 
+  const handleExportScriptsAsJson = () => {
+    // Group scripts by product
+    const exportData: any = {
+      marcas: {},
+    }
+
+    steps.forEach((step) => {
+      const productKey = step.productId || "standalone"
+      if (!exportData.marcas[productKey]) {
+        exportData.marcas[productKey] = {}
+      }
+      exportData.marcas[productKey][step.id] = {
+        title: step.title,
+        content: step.content,
+        contentSegments: step.contentSegments,
+        buttons: step.buttons,
+        formatting: step.formatting,
+        tabulations: step.tabulations,
+        order: step.order,
+      }
+    })
+
+    // Create JSON blob and download
+    const jsonString = JSON.stringify(exportData, null, 2)
+    const blob = new Blob([jsonString], { type: "application/json" })
+    const link = document.createElement("a")
+    const url = URL.createObjectURL(blob)
+
+    const today = new Date().toISOString().split("T")[0]
+    link.setAttribute("href", url)
+    link.setAttribute("download", `roteiros-export-${today}.json`)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast({
+      title: "Roteiros exportados",
+      description: "O arquivo JSON foi baixado com sucesso",
+    })
+  }
+
+  const handleExportProductScripts = (productId: string) => {
+    const productSteps = steps.filter((s) => s.productId === productId)
+    const product = products.find((p) => p.id === productId)
+
+    const exportData: any = {
+      marcas: {
+        [productId]: {},
+      },
+    }
+
+    productSteps.forEach((step) => {
+      exportData.marcas[productId][step.id] = {
+        title: step.title,
+        content: step.content,
+        contentSegments: step.contentSegments,
+        buttons: step.buttons,
+        formatting: step.formatting,
+        tabulations: step.tabulations,
+        order: step.order,
+      }
+    })
+
+    const jsonString = JSON.stringify(exportData, null, 2)
+    const blob = new Blob([jsonString], { type: "application/json" })
+    const link = document.createElement("a")
+    const url = URL.createObjectURL(blob)
+
+    const fileName = product?.name.toLowerCase().replace(/\s+/g, "-") || productId
+    link.setAttribute("href", url)
+    link.setAttribute("download", `roteiro-${fileName}.json`)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast({
+      title: "Roteiro exportado",
+      description: `Roteiro de ${product?.name || productId} exportado com sucesso`,
+    })
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -281,6 +367,14 @@ export function ScriptsTab() {
           <p className="text-muted-foreground mt-1">Crie e edite os scripts de atendimento com formatação avançada</p>
         </div>
         <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowJsonList(!showJsonList)}
+            disabled={!!editingStep || !!previewStep}
+          >
+            <FileJson className="h-4 w-4 mr-2" />
+            {showJsonList ? "Ocultar" : "Ver"} Roteiros JSON
+          </Button>
           <Button variant="outline" onClick={handleImportScript} disabled={!!editingStep || !!previewStep}>
             <Upload className="h-4 w-4 mr-2" />
             Importar JSON
@@ -291,6 +385,52 @@ export function ScriptsTab() {
           </Button>
         </div>
       </div>
+
+      {showJsonList && !editingStep && !previewStep && (
+        <Card className="border-primary/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileJson className="h-5 w-5" />
+              Roteiros Disponíveis para Exportação
+            </CardTitle>
+            <CardDescription>Exporte seus roteiros como arquivos JSON para backup ou compartilhamento</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+              <div>
+                <p className="font-semibold">Todos os Roteiros</p>
+                <p className="text-sm text-muted-foreground">
+                  {steps.length} {steps.length === 1 ? "tela" : "telas"} no total
+                </p>
+              </div>
+              <Button size="sm" onClick={handleExportScriptsAsJson}>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar Tudo
+              </Button>
+            </div>
+
+            {Object.entries(groupedSteps).map(([groupKey, groupSteps]) => {
+              const product = products.find((p) => p.id === groupKey)
+              const isStandalone = groupKey === "standalone"
+
+              return (
+                <div key={groupKey} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <p className="font-semibold">{isStandalone ? "Roteiros Avulsos" : product?.name || groupKey}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {groupSteps.length} {groupSteps.length === 1 ? "tela" : "telas"}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => handleExportProductScripts(groupKey)}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Exportar
+                  </Button>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {previewStep ? (
         <div className="space-y-4">

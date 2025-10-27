@@ -371,17 +371,6 @@ export const OperatorSidebar = memo(function OperatorSidebar({ isOpen }: Operato
               )}
             />
           </div>
-          <div className="pt-4 border-t border-border">
-            <Button
-              onClick={() => {
-                setShowTabulationFullView(false)
-                setTabulationSearchQuery("")
-              }}
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base shadow-lg hover:shadow-xl transition-all"
-            >
-              Voltar
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
 
@@ -429,17 +418,6 @@ export const OperatorSidebar = memo(function OperatorSidebar({ isOpen }: Operato
               )}
             />
           </div>
-          <div className="pt-4 border-t border-border">
-            <Button
-              onClick={() => {
-                setShowSituationFullView(false)
-                setSituationSearchQuery("")
-              }}
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base shadow-lg hover:shadow-xl transition-all"
-            >
-              Voltar
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
 
@@ -484,17 +462,6 @@ export const OperatorSidebar = memo(function OperatorSidebar({ isOpen }: Operato
                 </button>
               )}
             />
-          </div>
-          <div className="pt-4 border-t border-border">
-            <Button
-              onClick={() => {
-                setShowChannelFullView(false)
-                setChannelSearchQuery("")
-              }}
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base shadow-lg hover:shadow-xl transition-all"
-            >
-              Voltar
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

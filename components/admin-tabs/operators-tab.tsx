@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Circle, UserX, Plus, Edit, Trash2 } from "lucide-react"
+import { Circle, UserX, Plus, Edit, Trash2, Download } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
   getAllUsers,
@@ -24,6 +24,7 @@ import {
   getTodayLoginSessions,
   getTodayConnectedTime,
   getCurrentUser,
+  isUserOnline,
 } from "@/lib/store"
 import type { User } from "@/lib/types"
 
@@ -46,8 +47,7 @@ export function OperatorsTab() {
 
     loadOperators()
 
-    // Refresh every 30 seconds to update connected time
-    const interval = setInterval(loadOperators, 30000)
+    const interval = setInterval(loadOperators, 5000)
 
     const handleStoreUpdate = () => {
       loadOperators()
@@ -171,6 +171,52 @@ export function OperatorsTab() {
     return sessions.length > 0
   }
 
+  const handleExportReport = () => {
+    // Prepare CSV data
+    const headers = ["Nome", "Quantidade Logins no Dia", "Tempo Conectado", "Último Login"]
+    const rows = operators.map((operator) => {
+      const todaySessions = getTodayLoginSessions(operator.id)
+      const connectedTime = getTodayConnectedTime(operator.id)
+      const lastLogin = operator.lastLoginAt
+        ? new Date(operator.lastLoginAt).toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "Nunca"
+
+      return [
+        operator.fullName,
+        todaySessions.length.toString(),
+        connectedTime > 0 ? formatDuration(connectedTime) : "0h 0min",
+        lastLogin,
+      ]
+    })
+
+    // Create CSV content
+    const csvContent = [headers.join(","), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(","))].join("\n")
+
+    // Create blob and download
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" })
+    const link = document.createElement("a")
+    const url = URL.createObjectURL(blob)
+
+    const today = new Date().toLocaleDateString("pt-BR").replace(/\//g, "-")
+    link.setAttribute("href", url)
+    link.setAttribute("download", `relatorio-operadores-${today}.csv`)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast({
+      title: "Relatório exportado",
+      description: "O relatório foi baixado com sucesso",
+    })
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -178,10 +224,16 @@ export function OperatorsTab() {
           <h2 className="text-3xl font-bold">Gerenciar Operadores</h2>
           <p className="text-muted-foreground mt-1">Visualize e gerencie os operadores do sistema</p>
         </div>
-        <Button onClick={handleOpenDialog} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Adicionar Operador
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={handleExportReport} className="gap-2 bg-transparent">
+            <Download className="h-4 w-4" />
+            Exportar Relatório
+          </Button>
+          <Button onClick={handleOpenDialog} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Adicionar Operador
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4">
@@ -189,6 +241,7 @@ export function OperatorsTab() {
           const todaySessions = getTodayLoginSessions(operator.id)
           const connectedTime = getTodayConnectedTime(operator.id)
           const loggedInToday = hasLoggedInToday(operator)
+          const online = isUserOnline(operator.id)
 
           return (
             <Card key={operator.id}>
@@ -197,13 +250,18 @@ export function OperatorsTab() {
                   <div>
                     <CardTitle className="flex items-center gap-3">
                       {operator.fullName}
-                      {loggedInToday ? (
+                      {online ? (
                         <Badge variant="outline" className="gap-1 text-green-600 border-green-600">
+                          <Circle className="h-2 w-2 fill-current animate-pulse" />
+                          Online
+                        </Badge>
+                      ) : loggedInToday ? (
+                        <Badge variant="outline" className="gap-1 text-gray-600 border-gray-600">
                           <Circle className="h-2 w-2 fill-current" />
-                          Logou Hoje
+                          Offline
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="gap-1 text-gray-600 border-gray-600">
+                        <Badge variant="outline" className="gap-1 text-gray-400 border-gray-400">
                           <Circle className="h-2 w-2 fill-current" />
                           Não Logou Hoje
                         </Badge>
