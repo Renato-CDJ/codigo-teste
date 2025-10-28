@@ -41,6 +41,11 @@ export interface ScriptStep {
     italic?: boolean
     textAlign?: "left" | "center" | "right" | "justify"
   }
+  alert?: {
+    title: string // Added title field to alert object for customizable alert titles
+    message: string
+    createdAt: Date
+  }
 }
 
 export interface ContentSegment {

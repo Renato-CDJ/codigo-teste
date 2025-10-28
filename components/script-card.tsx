@@ -5,7 +5,7 @@ import type React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react"
+import { CheckCircle2, AlertCircle, ArrowLeft, AlertTriangle } from "lucide-react"
 import type { ScriptStep, ContentSegment } from "@/lib/types"
 import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -170,8 +170,11 @@ export const ScriptCard = memo(function ScriptCard({
   })
   const [showTabulation, setShowTabulation] = useState(false)
   const [showTabulationPulse, setShowTabulationPulse] = useState(false)
+  const [showAlert, setShowAlert] = useState(false)
 
   const hasTabulations = step.tabulations && step.tabulations.length > 0
+  const hasAlert = step.alert && step.alert.message
+  const alertTitle = step.alert?.title || "Alerta Importante"
 
   useEffect(() => {
     saveAccessibilitySettings(textSize[0], buttonSize[0])
@@ -227,6 +230,8 @@ export const ScriptCard = memo(function ScriptCard({
 
   const handleTabulationOpen = useCallback(() => setShowTabulation(true), [])
   const handleTabulationClose = useCallback(() => setShowTabulation(false), [])
+  const handleAlertOpen = useCallback(() => setShowAlert(true), [])
+  const handleAlertClose = useCallback(() => setShowAlert(false), [])
 
   const contentStyles = useMemo(() => {
     const styles: React.CSSProperties = {
@@ -320,6 +325,22 @@ export const ScriptCard = memo(function ScriptCard({
       )}
 
       <Card className="relative shadow-2xl border-2 border-orange-200/80 dark:border-orange-500/60 w-full overflow-hidden backdrop-blur-sm">
+        {hasAlert && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAlertOpen}
+            className="absolute top-3 left-3 md:top-4 md:left-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 dark:from-amber-400 dark:to-amber-500 dark:hover:from-amber-500 dark:hover:to-amber-600 text-white font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 z-10 text-xs md:text-sm animate-pulse"
+          >
+            <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 md:mr-2 animate-bounce" />
+            <span className="hidden md:inline">{alertTitle}</span>
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            </span>
+          </Button>
+        )}
+
         <Button
           variant="outline"
           size="sm"
@@ -392,6 +413,39 @@ export const ScriptCard = memo(function ScriptCard({
             })}
         </div>
       </div>
+
+      <Dialog open={showAlert} onOpenChange={setShowAlert}>
+        <DialogContent className="sm:max-w-2xl shadow-2xl max-h-[80vh] overflow-y-auto border-2 border-border">
+          <DialogHeader className="space-y-3 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-3 text-xl font-bold">
+              <div className="p-2 rounded-lg bg-amber-500 dark:bg-amber-600 animate-pulse">
+                <AlertTriangle className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-foreground">{alertTitle}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="group relative rounded-xl border-2 border-border bg-muted/50 p-6 shadow-md">
+              <div className="absolute top-3 right-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                <AlertTriangle className="h-12 w-12 text-amber-500 dark:text-amber-400" />
+              </div>
+              <div className="relative">
+                <p className="text-base text-foreground leading-relaxed whitespace-pre-wrap break-words">
+                  {step.alert?.message}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="pt-4 border-t border-border">
+            <Button
+              onClick={handleAlertClose}
+              className="w-full h-11 bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 text-white font-bold border-0 shadow-lg hover:shadow-xl transition-all duration-200 text-base"
+            >
+              Entendi
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showTabulation} onOpenChange={setShowTabulation}>
         <DialogContent className="sm:max-w-2xl shadow-2xl max-h-[80vh] overflow-y-auto border-2 border-orange-200 dark:border-zinc-700">

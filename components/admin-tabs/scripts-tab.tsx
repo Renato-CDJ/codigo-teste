@@ -26,6 +26,7 @@ import {
   RotateCcw,
   Download,
   FileJson,
+  AlertCircle,
 } from "lucide-react"
 import {
   getScriptSteps,
@@ -41,9 +42,13 @@ import { AdminScriptPreview } from "@/components/admin-script-preview"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const AVAILABLE_JSON_FILES = [
-  { name: "Comercial", file: "comercial.json", path: "/data/comercial.json" },
-  { name: "Habitacional 532", file: "hab532.json", path: "/data/hab532.json" },
-  { name: "Habitacional", file: "habitacional-script.json", path: "/data/habitacional-script.json" },
+  { name: "Comercial", file: "comercial.json", path: "/api/scripts/data/comercial.json" },
+  { name: "Habitacional 532", file: "hab532.json", path: "/api/scripts/data/hab532.json" },
+  {
+    name: "Habitacional",
+    file: "habitacional-script.json",
+    path: "/api/scripts/data/habitacional-script.json",
+  },
 ]
 
 export function ScriptsTab() {
@@ -574,6 +579,79 @@ export function ScriptsTab() {
                     />
                   </div>
                 </div>
+
+                <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                      Alerta para Operador
+                    </CardTitle>
+                    <CardDescription>
+                      Adicione uma mensagem de alerta que será exibida para o operador nesta tela
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="alertTitle">Título do Alerta</Label>
+                      <Input
+                        id="alertTitle"
+                        value={editingStep.alert?.title || ""}
+                        onChange={(e) =>
+                          setEditingStep({
+                            ...editingStep,
+                            alert:
+                              e.target.value || editingStep.alert?.message
+                                ? {
+                                    title: e.target.value,
+                                    message: editingStep.alert?.message || "",
+                                    createdAt: editingStep.alert?.createdAt || new Date(),
+                                  }
+                                : undefined,
+                          })
+                        }
+                        placeholder="Ex: Atenção, Importante, Leia com cuidado..."
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Este título aparecerá ao lado do ícone de alerta na tela do operador
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="alertMessage">Mensagem de Alerta</Label>
+                      <Textarea
+                        id="alertMessage"
+                        value={editingStep.alert?.message || ""}
+                        onChange={(e) =>
+                          setEditingStep({
+                            ...editingStep,
+                            alert:
+                              e.target.value || editingStep.alert?.title
+                                ? {
+                                    title: editingStep.alert?.title || "Alerta Importante",
+                                    message: e.target.value,
+                                    createdAt: editingStep.alert?.createdAt || new Date(),
+                                  }
+                                : undefined,
+                          })
+                        }
+                        placeholder="Digite uma mensagem importante para o operador visualizar nesta tela..."
+                        rows={3}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {editingStep.alert?.message
+                          ? "Um ícone de alerta piscante será exibido para o operador"
+                          : "Deixe em branco se não houver alertas"}
+                      </p>
+                    </div>
+                    {editingStep.alert?.message && (
+                      <div className="flex items-center gap-2 p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg border border-amber-300 dark:border-amber-700">
+                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 animate-pulse" />
+                        <span className="text-sm text-amber-900 dark:text-amber-100">
+                          Alerta ativo - será exibido ao operador
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 <RichTextEditor
                   value={editingStep.content}
