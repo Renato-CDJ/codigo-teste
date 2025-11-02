@@ -1,77 +1,69 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, ExternalLink, Calendar, Plus } from "lucide-react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 
-// Mock data para projetos
-const projetos = [
-  {
-    id: 1,
-    titulo: "E-commerce Moderno",
-    descricao:
-      "Plataforma completa de e-commerce com carrinho de compras, pagamento integrado e painel administrativo.",
-    categoria: "Web",
-    status: "Concluído",
-    data: "Janeiro 2025",
-    tecnologias: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
-    imagem: "/modern-ecommerce-website.png",
-  },
-  {
-    id: 2,
-    titulo: "Dashboard Analytics",
-    descricao: "Dashboard interativo para visualização de dados e métricas de negócio em tempo real.",
-    categoria: "Web",
-    status: "Concluído",
-    data: "Dezembro 2024",
-    tecnologias: ["React", "Chart.js", "Node.js", "PostgreSQL"],
-    imagem: "/analytics-dashboard-dark-theme.png",
-  },
-  {
-    id: 3,
-    titulo: "Jogo de Aventura 2D",
-    descricao: "Jogo de plataforma 2D com mecânicas de puzzle e narrativa envolvente.",
-    categoria: "Jogos",
-    status: "Em Desenvolvimento",
-    data: "Em andamento",
-    tecnologias: ["Unity", "C#", "Pixel Art"],
-    imagem: "/2d-platformer-pixel-art.png",
-  },
-  {
-    id: 4,
-    titulo: "Sistema de Gestão",
-    descricao: "Sistema completo para gestão de clientes, projetos e finanças para pequenas empresas.",
-    categoria: "Sistema",
-    status: "Concluído",
-    data: "Novembro 2024",
-    tecnologias: ["Vue.js", "Express", "MongoDB", "Docker"],
-    imagem: "/business-management-system-interface.jpg",
-  },
-  {
-    id: 5,
-    titulo: "App Mobile Fitness",
-    descricao: "Aplicativo mobile para acompanhamento de treinos e nutrição com sincronização em nuvem.",
-    categoria: "Mobile",
-    status: "Concluído",
-    data: "Outubro 2024",
-    tecnologias: ["React Native", "Firebase", "Redux"],
-    imagem: "/fitness-app-interface.png",
-  },
-  {
-    id: 6,
-    titulo: "Jogo Multiplayer Online",
-    descricao: "Jogo multiplayer competitivo com sistema de ranking e matchmaking.",
-    categoria: "Jogos",
-    status: "Em Desenvolvimento",
-    data: "Em andamento",
-    tecnologias: ["Unreal Engine", "C++", "WebSockets"],
-    imagem: "/multiplayer-online-game-interface.jpg",
-  },
-]
+interface Projeto {
+  id: number
+  titulo: string
+  descricao: string
+  categoria: string
+  status: string
+  data: string
+  tecnologias: string[]
+  imagem: string
+}
 
 export default function ClientePage() {
   const categorias = ["Todos", "Web", "Jogos", "Sistema", "Mobile"]
+  const [projetos, setProjetos] = useState<Projeto[]>([])
+
+  useEffect(() => {
+    const dadosProjetos = localStorage.getItem("projetosAdmin")
+    if (dadosProjetos) {
+      setProjetos(JSON.parse(dadosProjetos))
+    } else {
+      const projetosIniciais = [
+        {
+          id: 1,
+          titulo: "E-commerce Moderno",
+          descricao:
+            "Plataforma completa de e-commerce com carrinho de compras, pagamento integrado e painel administrativo.",
+          categoria: "Web",
+          status: "Concluído",
+          data: "Janeiro 2025",
+          tecnologias: ["React", "Next.js", "TypeScript", "Tailwind CSS"],
+          imagem: "/modern-ecommerce-website.png",
+        },
+        {
+          id: 2,
+          titulo: "Dashboard Analytics",
+          descricao: "Dashboard interativo para visualização de dados e métricas de negócio em tempo real.",
+          categoria: "Web",
+          status: "Concluído",
+          data: "Dezembro 2024",
+          tecnologias: ["React", "Chart.js", "Node.js", "PostgreSQL"],
+          imagem: "/analytics-dashboard-dark-theme.png",
+        },
+        {
+          id: 3,
+          titulo: "Jogo de Aventura 2D",
+          descricao: "Jogo de plataforma 2D com mecânicas de puzzle e narrativa envolvente.",
+          categoria: "Jogos",
+          status: "Em Desenvolvimento",
+          data: "Em andamento",
+          tecnologias: ["Unity", "C#", "Pixel Art"],
+          imagem: "/2d-platformer-pixel-art.png",
+        },
+      ]
+      setProjetos(projetosIniciais)
+    }
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">

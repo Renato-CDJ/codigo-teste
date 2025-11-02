@@ -1,10 +1,84 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Code2, Gamepad2, Globe, ArrowRight, Github, Linkedin, Mail } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function HomePage() {
+  const [nome, setNome] = useState("Renato")
+  const [bio, setBio] = useState(
+    "Desenvolvedor apaixonado por tecnologia, especializado em aplicações Web e desenvolvimento de jogos. Transformo ideias em experiências digitais funcionais e envolventes.",
+  )
+  const [fotoPerfil, setFotoPerfil] = useState("/developer-profile.png")
+
+  const [servicoWeb, setServicoWeb] = useState(
+    "Desenvolvimento de sites, sistemas e plataformas web modernas com foco em performance e experiência do usuário.",
+  )
+  const [servicoJogos, setServicoJogos] = useState(
+    "Criação de jogos e experiências interativas, explorando mecânicas inovadoras e narrativas envolventes.",
+  )
+  const [servicoSolucoes, setServicoSolucoes] = useState(
+    "Análise e desenvolvimento de soluções sob medida para atender necessidades específicas de cada projeto.",
+  )
+  const [formacaoAcademica, setFormacaoAcademica] = useState(
+    "Curso Superior de Tecnologia (CST) - Análise de Sistemas de Computação",
+  )
+  const [especializacoes, setEspecializacoes] = useState<string[]>([])
+  const [tecnologias, setTecnologias] = useState<string[]>([])
+  const [emailContato, setEmailContato] = useState("contato@renato.dev")
+  const [github, setGithub] = useState("github.com/renato")
+  const [linkedin, setLinkedin] = useState("linkedin.com/in/renato")
+
+  useEffect(() => {
+    const dadosSalvos = localStorage.getItem("perfilAdmin")
+    if (dadosSalvos) {
+      const dados = JSON.parse(dadosSalvos)
+      if (dados.nome) setNome(dados.nome.split(" ")[0])
+      if (dados.bio) setBio(dados.bio)
+      if (dados.fotoPerfil) setFotoPerfil(dados.fotoPerfil)
+    }
+
+    const dadosSobreMim = localStorage.getItem("sobreMimAdmin")
+    if (dadosSobreMim) {
+      const dados = JSON.parse(dadosSobreMim)
+      if (dados.servicoWeb) setServicoWeb(dados.servicoWeb)
+      if (dados.servicoJogos) setServicoJogos(dados.servicoJogos)
+      if (dados.servicoSolucoes) setServicoSolucoes(dados.servicoSolucoes)
+    }
+
+    const dadosFormacao = localStorage.getItem("formacaoAdmin")
+    if (dadosFormacao) {
+      const dados = JSON.parse(dadosFormacao)
+      if (dados.formacaoAcademica) setFormacaoAcademica(dados.formacaoAcademica)
+      if (dados.especializacoes) setEspecializacoes(dados.especializacoes)
+      if (dados.tecnologias) setTecnologias(dados.tecnologias)
+    } else {
+      // Valores padrão
+      setEspecializacoes([
+        "Desenvolvimento Web",
+        "Business Intelligence",
+        "Big Data & Analytics",
+        "Ciência de Dados",
+        "Google Workspace",
+        "Microsoft Office",
+        "Sistemas Operacionais",
+      ])
+      setTecnologias(["JavaScript", "TypeScript", "React", "Next.js", "Node.js", "HTML/CSS", "Git", "SQL", "Python"])
+    }
+
+    const dadosContato = localStorage.getItem("contatoAdmin")
+    if (dadosContato) {
+      const dados = JSON.parse(dadosContato)
+      if (dados.emailContato) setEmailContato(dados.emailContato)
+      if (dados.github) setGithub(dados.github)
+      if (dados.linkedin) setLinkedin(dados.linkedin)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-slate-950">
       <header className="border-b border-slate-800 bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 shadow-lg">
@@ -39,35 +113,46 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.2),transparent_50%)]" />
         <div className="container mx-auto px-4 relative">
-          <div className="max-w-4xl">
-            <p className="text-cyan-400 font-medium mb-4">Olá, eu sou</p>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance bg-gradient-to-r from-white via-cyan-200 to-blue-200 bg-clip-text text-transparent">
-              Renato
-            </h1>
-            <p className="text-xl md:text-2xl text-slate-300 mb-8 leading-relaxed text-pretty">
-              Desenvolvedor apaixonado por tecnologia, especializado em{" "}
-              <span className="text-cyan-400 font-semibold">aplicações Web</span> e{" "}
-              <span className="text-blue-400 font-semibold">desenvolvimento de jogos</span>. Transformo ideias em
-              experiências digitais funcionais e envolventes.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/cliente">
-                <Button
-                  size="lg"
-                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30"
-                >
-                  Ver Projetos <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link href="#contato">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 bg-transparent"
-                >
-                  Entre em Contato
-                </Button>
-              </Link>
+          <div className="flex flex-col md:flex-row items-center gap-12 max-w-6xl">
+            {/* Foto de Perfil */}
+            <div className="flex-shrink-0">
+              <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-full border-4 border-cyan-500 shadow-2xl shadow-cyan-500/40 overflow-hidden bg-slate-800">
+                <Image
+                  src={fotoPerfil || "/placeholder.svg?height=256&width=256"}
+                  alt="Foto de Perfil"
+                  width={256}
+                  height={256}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Conteúdo */}
+            <div className="flex-1">
+              <p className="text-cyan-400 font-medium mb-4">Olá, eu sou</p>
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance bg-gradient-to-r from-white via-cyan-200 to-blue-200 bg-clip-text text-transparent">
+                {nome}
+              </h1>
+              <p className="text-xl md:text-2xl text-slate-300 mb-8 leading-relaxed text-pretty">{bio}</p>
+              <div className="flex flex-wrap gap-4">
+                <Link href="/cliente">
+                  <Button
+                    size="lg"
+                    className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30"
+                  >
+                    Ver Projetos <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Link href="#contato">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 bg-transparent"
+                  >
+                    Entre em Contato
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -83,10 +168,7 @@ export default function HomePage() {
                   <Globe className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">Aplicações Web</h3>
-                <p className="text-slate-300 leading-relaxed">
-                  Desenvolvimento de sites, sistemas e plataformas web modernas com foco em performance e experiência do
-                  usuário.
-                </p>
+                <p className="text-slate-300 leading-relaxed">{servicoWeb}</p>
               </CardContent>
             </Card>
 
@@ -96,9 +178,7 @@ export default function HomePage() {
                   <Gamepad2 className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">Desenvolvimento de Jogos</h3>
-                <p className="text-slate-300 leading-relaxed">
-                  Criação de jogos e experiências interativas, explorando mecânicas inovadoras e narrativas envolventes.
-                </p>
+                <p className="text-slate-300 leading-relaxed">{servicoJogos}</p>
               </CardContent>
             </Card>
 
@@ -108,10 +188,7 @@ export default function HomePage() {
                   <Code2 className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2 text-white">Soluções Personalizadas</h3>
-                <p className="text-slate-300 leading-relaxed">
-                  Análise e desenvolvimento de soluções sob medida para atender necessidades específicas de cada
-                  projeto.
-                </p>
+                <p className="text-slate-300 leading-relaxed">{servicoSolucoes}</p>
               </CardContent>
             </Card>
           </div>
@@ -130,8 +207,7 @@ export default function HomePage() {
                   <div className="flex items-start gap-4">
                     <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2" />
                     <div>
-                      <h4 className="font-semibold text-white">Curso Superior de Tecnologia (CST)</h4>
-                      <p className="text-slate-300">Análise de Sistemas de Computação</p>
+                      <p className="text-slate-300">{formacaoAcademica}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -141,41 +217,23 @@ export default function HomePage() {
             <div>
               <h3 className="text-xl font-semibold mb-4 text-cyan-400">Especializações</h3>
               <div className="flex flex-wrap gap-2">
-                <Badge className="bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border-blue-500/30">
-                  Desenvolvimento Web
-                </Badge>
-                <Badge className="bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border-indigo-500/30">
-                  Business Intelligence
-                </Badge>
-                <Badge className="bg-cyan-600/20 text-cyan-300 hover:bg-cyan-600/30 border-cyan-500/30">
-                  Big Data & Analytics
-                </Badge>
-                <Badge className="bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border-blue-500/30">
-                  Ciência de Dados
-                </Badge>
-                <Badge className="bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border-indigo-500/30">
-                  Google Workspace
-                </Badge>
-                <Badge className="bg-cyan-600/20 text-cyan-300 hover:bg-cyan-600/30 border-cyan-500/30">
-                  Microsoft Office
-                </Badge>
-                <Badge className="bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border-blue-500/30">
-                  Sistemas Operacionais
-                </Badge>
+                {especializacoes.map((esp, index) => (
+                  <Badge key={index} className="bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border-blue-500/30">
+                    {esp}
+                  </Badge>
+                ))}
               </div>
             </div>
 
             <div>
               <h3 className="text-xl font-semibold mb-4 text-cyan-400">Tecnologias</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {["JavaScript", "TypeScript", "React", "Next.js", "Node.js", "HTML/CSS", "Git", "SQL", "Python"].map(
-                  (tech) => (
-                    <div key={tech} className="flex items-center gap-2 text-slate-300">
-                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                      <span>{tech}</span>
-                    </div>
-                  ),
-                )}
+                {tecnologias.map((tech, index) => (
+                  <div key={index} className="flex items-center gap-2 text-slate-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                    <span>{tech}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -258,7 +316,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-sm text-slate-400">Email</p>
-                    <p className="font-medium text-white">contato@renato.dev</p>
+                    <p className="font-medium text-white">{emailContato}</p>
                   </div>
                 </div>
               </CardContent>
@@ -272,7 +330,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-sm text-slate-400">GitHub</p>
-                    <p className="font-medium text-white">github.com/renato</p>
+                    <p className="font-medium text-white">{github}</p>
                   </div>
                 </div>
               </CardContent>
@@ -286,7 +344,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-sm text-slate-400">LinkedIn</p>
-                    <p className="font-medium text-white">linkedin.com/in/renato</p>
+                    <p className="font-medium text-white">{linkedin}</p>
                   </div>
                 </div>
               </CardContent>
