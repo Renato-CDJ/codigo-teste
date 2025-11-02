@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Code2, Gamepad2, Globe, ArrowRight, Github, Linkedin, Mail, Settings } from "lucide-react"
+import { Code2, Gamepad2, Globe, ArrowRight, Github, Linkedin, Mail } from "lucide-react"
 import Link from "next/link"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
-      <header className="border-b bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 shadow-lg">
+    <div className="min-h-screen bg-slate-950">
+      <header className="border-b border-slate-800 bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold text-white">
             Renato<span className="text-cyan-400">.</span>
@@ -31,45 +31,44 @@ export default function HomePage() {
                 Área do Cliente
               </Button>
             </Link>
-            <Link href="/login">
-              <Button size="sm" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
-                <Settings className="w-4 h-4" />
-                Admin
-              </Button>
-            </Link>
           </nav>
         </div>
       </header>
 
-      <section className="relative container mx-auto px-4 py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 -z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.2),transparent_50%)] -z-10" />
-        <div className="max-w-4xl relative">
-          <p className="text-cyan-400 font-medium mb-4">Olá, eu sou</p>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance bg-gradient-to-r from-white via-cyan-200 to-blue-200 bg-clip-text text-transparent">
-            Renato
-          </h1>
-          <p className="text-xl md:text-2xl text-slate-300 mb-8 leading-relaxed text-pretty">
-            Desenvolvedor apaixonado por tecnologia, especializado em{" "}
-            <span className="text-cyan-400 font-semibold">aplicações Web</span> e{" "}
-            <span className="text-blue-400 font-semibold">desenvolvimento de jogos</span>. Transformo ideias em
-            experiências digitais funcionais e envolventes.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Link href="/cliente">
-              <Button size="lg" className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30">
-                Ver Projetos <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Link href="#contato">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 bg-transparent"
-              >
-                Entre em Contato
-              </Button>
-            </Link>
+      <section className="relative py-20 md:py-32 bg-slate-950">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.2),transparent_50%)]" />
+        <div className="container mx-auto px-4 relative">
+          <div className="max-w-4xl">
+            <p className="text-cyan-400 font-medium mb-4">Olá, eu sou</p>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-balance bg-gradient-to-r from-white via-cyan-200 to-blue-200 bg-clip-text text-transparent">
+              Renato
+            </h1>
+            <p className="text-xl md:text-2xl text-slate-300 mb-8 leading-relaxed text-pretty">
+              Desenvolvedor apaixonado por tecnologia, especializado em{" "}
+              <span className="text-cyan-400 font-semibold">aplicações Web</span> e{" "}
+              <span className="text-blue-400 font-semibold">desenvolvimento de jogos</span>. Transformo ideias em
+              experiências digitais funcionais e envolventes.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link href="/cliente">
+                <Button
+                  size="lg"
+                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30"
+                >
+                  Ver Projetos <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link href="#contato">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 bg-transparent"
+                >
+                  Entre em Contato
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
