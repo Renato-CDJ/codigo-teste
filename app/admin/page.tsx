@@ -1,154 +1,176 @@
 "use client"
 
-import { useState, lazy, Suspense, memo } from "react"
-import { ProtectedRoute } from "@/components/protected-route"
-import { AdminSidebar } from "@/components/admin-sidebar"
-import { Toaster } from "@/components/ui/toaster"
+import type React from "react"
+
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
-import { Loader2 } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { Camera, User, Mail, Phone, Briefcase, LogOut, Eye } from "lucide-react"
 
-const DashboardTab = lazy(() =>
-  import("@/components/admin-tabs/dashboard-tab").then((m) => ({ default: m.DashboardTab })),
-)
-const ScriptsTab = lazy(() => import("@/components/admin-tabs/scripts-tab").then((m) => ({ default: m.ScriptsTab })))
-const ProductsTab = lazy(() => import("@/components/admin-tabs/products-tab").then((m) => ({ default: m.ProductsTab })))
-const AttendanceTypesTab = lazy(() =>
-  import("@/components/admin-tabs/attendance-types-tab").then((m) => ({ default: m.AttendanceTypesTab })),
-)
-const OperatorsTab = lazy(() =>
-  import("@/components/admin-tabs/operators-tab").then((m) => ({ default: m.OperatorsTab })),
-)
-const TabulationsTab = lazy(() =>
-  import("@/components/admin-tabs/tabulations-tab").then((m) => ({ default: m.TabulationsTab })),
-)
-const SituationsTab = lazy(() =>
-  import("@/components/admin-tabs/situations-tab").then((m) => ({ default: m.SituationsTab })),
-)
-const ChannelsTab = lazy(() => import("@/components/admin-tabs/channels-tab").then((m) => ({ default: m.ChannelsTab })))
-const NotesTab = lazy(() => import("@/components/admin-tabs/notes-tab").then((m) => ({ default: m.NotesTab })))
-const MessagesQuizTab = lazy(() =>
-  import("@/components/admin-tabs/messages-quiz-tab").then((m) => ({ default: m.MessagesQuizTab })),
-)
-const SettingsPage = lazy(() => import("@/app/admin/settings/page"))
-
-const LoadingFallback = memo(function LoadingFallback() {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-        <p className="text-sm text-muted-foreground">Carregando...</p>
-      </div>
-    </div>
-  )
-})
-
-const AdminContent = memo(function AdminContent() {
-  const [activeTab, setActiveTab] = useState("dashboard")
+export default function AdminPage() {
   const router = useRouter()
-  const { logout } = useAuth()
+  const [nome, setNome] = useState("Renato Calixto")
+  const [email, setEmail] = useState("renato@exemplo.com")
+  const [telefone, setTelefone] = useState("(00) 00000-0000")
+  const [bio, setBio] = useState("Desenvolvedor apaixonado por tecnologia, especializado em aplicações Web e jogos.")
+  const [fotoPerfil, setFotoPerfil] = useState("/developer-profile.png")
 
-  const handleBack = () => {
-    logout()
-    router.push("/")
+  useEffect(() => {
+    const autenticado = localStorage.getItem("usuarioAutenticado")
+    if (!autenticado) {
+      router.push("/login")
+    }
+
+    // Carregar dados salvos
+    const dadosSalvos = localStorage.getItem("perfilAdmin")
+    if (dadosSalvos) {
+      const dados = JSON.parse(dadosSalvos)
+      setNome(dados.nome || nome)
+      setEmail(dados.email || email)
+      setTelefone(dados.telefone || telefone)
+      setBio(dados.bio || bio)
+      setFotoPerfil(dados.fotoPerfil || fotoPerfil)
+    }
+  }, [router])
+
+  const handleLogout = () => {
+    localStorage.removeItem("usuarioAutenticado")
+    router.push("/login")
   }
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <DashboardTab />
-          </Suspense>
-        )
-      case "scripts":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <ScriptsTab />
-          </Suspense>
-        )
-      case "products":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <ProductsTab />
-          </Suspense>
-        )
-      case "attendance-config":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <AttendanceTypesTab />
-          </Suspense>
-        )
-      case "operators":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <OperatorsTab />
-          </Suspense>
-        )
-      case "tabulations":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <TabulationsTab />
-          </Suspense>
-        )
-      case "situations":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <SituationsTab />
-          </Suspense>
-        )
-      case "channels":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <ChannelsTab />
-          </Suspense>
-        )
-      case "notes":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <NotesTab />
-          </Suspense>
-        )
-      case "messages-quiz":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <MessagesQuizTab />
-          </Suspense>
-        )
-      case "settings":
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <SettingsPage />
-          </Suspense>
-        )
-      default:
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <DashboardTab />
-          </Suspense>
-        )
+  const handleSalvar = () => {
+    const dados = { nome, email, telefone, bio, fotoPerfil }
+    localStorage.setItem("perfilAdmin", JSON.stringify(dados))
+    alert("Perfil atualizado com sucesso!")
+  }
+
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setFotoPerfil(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen h-dvh bg-background overflow-hidden">
-      <aside className="w-full md:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-border overflow-auto md:overflow-hidden">
-        <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      </aside>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-lg border-b border-slate-700 shadow-lg">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-cyan-400">Painel de Administração</h1>
+          <div className="flex gap-4">
+            <Link
+              href="/"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+            >
+              <Eye className="w-4 h-4" />
+              Ver Site Público
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+            >
+              <LogOut className="w-4 h-4" />
+              Sair
+            </button>
+          </div>
+        </div>
+      </header>
 
-      <main className="flex-1 overflow-auto min-h-0">
-        <div className="container mx-auto p-4 md:p-6 lg:p-8">{renderContent()}</div>
+      {/* Main Content */}
+      <main className="container mx-auto px-6 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white/5 backdrop-blur-lg border border-slate-700 rounded-2xl p-8 shadow-2xl">
+            <h2 className="text-3xl font-bold text-white mb-8">Editar Perfil</h2>
+
+            {/* Foto de Perfil */}
+            <div className="flex flex-col items-center mb-8">
+              <div className="relative group">
+                <div className="w-40 h-40 rounded-full border-4 border-cyan-500 shadow-lg shadow-cyan-500/40 overflow-hidden bg-slate-800">
+                  <Image
+                    src={fotoPerfil || "/placeholder.svg"}
+                    alt="Foto de Perfil"
+                    width={160}
+                    height={160}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <label className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 p-3 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 shadow-lg">
+                  <Camera className="w-5 h-5 text-white" />
+                  <input type="file" accept="image/*" onChange={handleFotoChange} className="hidden" />
+                </label>
+              </div>
+              <p className="text-slate-400 text-sm mt-3">Clique no ícone para alterar a foto</p>
+            </div>
+
+            {/* Formulário */}
+            <div className="space-y-6">
+              <div>
+                <label className="flex items-center gap-2 text-slate-300 mb-2 font-medium">
+                  <User className="w-4 h-4" />
+                  Nome Completo
+                </label>
+                <input
+                  type="text"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-slate-300 mb-2 font-medium">
+                  <Mail className="w-4 h-4" />
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-slate-300 mb-2 font-medium">
+                  <Phone className="w-4 h-4" />
+                  Telefone
+                </label>
+                <input
+                  type="tel"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-slate-300 mb-2 font-medium">
+                  <Briefcase className="w-4 h-4" />
+                  Biografia
+                </label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 bg-slate-900 text-white border border-slate-600 rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/50 transition-all resize-none"
+                />
+              </div>
+
+              <button
+                onClick={handleSalvar}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold rounded-lg transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-cyan-500/50"
+              >
+                Salvar Alterações
+              </button>
+            </div>
+          </div>
+        </div>
       </main>
-
-      <Toaster />
     </div>
-  )
-})
-
-export default function AdminPage() {
-  return (
-    <ProtectedRoute allowedRoles={["admin"]}>
-      <AdminContent />
-    </ProtectedRoute>
   )
 }
