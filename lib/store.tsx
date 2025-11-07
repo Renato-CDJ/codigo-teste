@@ -608,6 +608,8 @@ export function initializeMockData() {
     localStorage.setItem(STORAGE_KEYS.LAST_UPDATE, Date.now().toString())
   }
 
+  cleanupOldSessions()
+
   loadScriptsFromDataFolder()
 }
 
@@ -1040,20 +1042,30 @@ export function importScriptFromJson(jsonData: JsonData): { productCount: number
   try {
     if (jsonData.marcas) {
       Object.entries(jsonData.marcas).forEach(([productName, productSteps]: [string, any]) => {
+        if (!productSteps || typeof productSteps !== "object") {
+          console.warn(`[v0] Skipping invalid product: ${productName}`)
+          return
+        }
+
         const steps: ScriptStep[] = []
         const productId = `prod-${productName.toLowerCase().replace(/\s+/g, "-")}`
 
         Object.entries(productSteps).forEach(([stepKey, stepData]: [string, any]) => {
-          if (!stepData.id || !stepData.title) {
-            console.warn(`[v0] Skipping invalid step: ${stepKey}`)
+          if (!stepData || typeof stepData !== "object" || !stepData.id || !stepData.title) {
+            console.warn(`[v0] Skipping invalid step: ${stepKey} in product ${productName}`)
             return
+          }
+
+          const content = stepData.body || stepData.content || ""
+          if (!content.trim()) {
+            console.warn(`[v0] Warning: Empty content for step ${stepData.id}`)
           }
 
           const step: ScriptStep = {
             id: stepData.id,
             productId: productId,
             title: stepData.title || "",
-            content: stepData.body || stepData.content || "",
+            content: content,
             order: stepData.order || 0,
             buttons: (stepData.buttons || []).map((btn: any, index: number) => ({
               id: `btn-${stepData.id}-${index}`,
@@ -1079,8 +1091,16 @@ export function importScriptFromJson(jsonData: JsonData): { productCount: number
 
           const firstStep =
             steps.find(
-              (s) => s.title.toLowerCase().includes("abordagem") || s.id.toLowerCase().includes("abordagem"),
+              (s) =>
+                s.title.toLowerCase().includes("abordagem") ||
+                s.id.toLowerCase().includes("abordagem") ||
+                s.order === 1,
             ) || steps[0]
+
+          if (!firstStep) {
+            console.error(`[v0] No valid first step found for product ${productName}`)
+            return
+          }
 
           const product: Product = {
             id: productId,
@@ -1108,6 +1128,7 @@ export function importScriptFromJson(jsonData: JsonData): { productCount: number
     }
   } catch (error) {
     console.error("[v0] Error importing script from JSON:", error)
+    throw error // Re-throw to allow caller to handle the error
   }
 
   return { productCount, stepCount }
@@ -1612,16 +1633,24 @@ export function cleanupOldSessions() {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
+    let cleanedCount = 0
+
     users.forEach((user) => {
       if (user.loginSessions && user.loginSessions.length > 50) {
-        // Keep only last 50 sessions
+        const originalLength = user.loginSessions.length
+        // Keep only last 50 sessions and those within 30 days
         user.loginSessions = user.loginSessions
           .filter((session) => new Date(session.loginAt) > thirtyDaysAgo)
           .slice(-50)
+
+        cleanedCount += originalLength - user.loginSessions.length
       }
     })
 
-    debouncedSave(STORAGE_KEYS.USERS, users)
+    if (cleanedCount > 0) {
+      console.log(`[v0] Cleaned up ${cleanedCount} old sessions`)
+      debouncedSave(STORAGE_KEYS.USERS, users)
+    }
   } catch (error) {
     console.error("[v0] Error cleaning up sessions:", error)
   }

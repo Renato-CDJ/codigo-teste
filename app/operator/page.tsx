@@ -125,7 +125,14 @@ const OperatorContent = memo(function OperatorContent() {
         return
       }
 
-      if (nextStepId && currentProductId) {
+      if (!currentProductId) {
+        console.error("[v0] Missing productId - cannot navigate")
+        alert("Erro: Produto não identificado. Por favor, reinicie o atendimento.")
+        handleBackToStart()
+        return
+      }
+
+      if (nextStepId) {
         const nextStep = getScriptStepById(nextStepId, currentProductId)
         console.log("[v0] Next step found:", nextStep?.title || "Not found")
 
@@ -137,13 +144,11 @@ const OperatorContent = memo(function OperatorContent() {
           console.log("[v0] Next step not found for ID:", nextStepId)
           alert(`Próxima tela não encontrada. ID: ${nextStepId}. Por favor, contate o administrador.`)
         }
-      } else if (!nextStepId) {
+      } else {
         console.log("[v0] No nextStepId provided - end of script flow")
-        alert("Fim do roteiro atingido. Configure o próximo passo no painel administrativo.")
-      } else if (!currentProductId) {
-        console.error("[v0] Missing productId - cannot navigate")
-        alert("Erro: Produto não identificado. Por favor, reinicie o atendimento.")
-        handleBackToStart()
+        alert(
+          "Fim do roteiro atingido. Clique em 'Voltar ao Início' para iniciar um novo atendimento ou contate o administrador para configurar o próximo passo.",
+        )
       }
     },
     [currentProductId, handleBackToStart],

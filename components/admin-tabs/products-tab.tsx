@@ -47,7 +47,9 @@ export function ProductsTab() {
   }
 
   const handleOpenDialog = (product?: Product) => {
-    setDialogId(`dialog-${Date.now()}`)
+    const newDialogId = `dialog-${Date.now()}`
+    setDialogId(newDialogId)
+
     if (product) {
       setEditingProduct(product)
       setFormData({

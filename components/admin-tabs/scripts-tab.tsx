@@ -375,15 +375,6 @@ export function ScriptsTab() {
           <p className="text-muted-foreground mt-1">Crie e edite os scripts de atendimento com formatação avançada</p>
         </div>
         <div className="flex gap-3">
-          <Button
-            variant="default"
-            onClick={handleLoadScripts}
-            disabled={!!editingStep || !!previewStep}
-            className="bg-orange-500 hover:bg-orange-600 dark:bg-gradient-to-r dark:from-orange-500 dark:to-pink-500"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Carregar Scripts
-          </Button>
           <Button variant="outline" onClick={handleImportScript} disabled={!!editingStep || !!previewStep}>
             <Upload className="h-4 w-4 mr-2" />
             Importar JSON
@@ -394,22 +385,6 @@ export function ScriptsTab() {
           </Button>
         </div>
       </div>
-
-      {!editingStep && !previewStep && (
-        <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              Como usar o Carregar Scripts
-            </CardTitle>
-            <CardDescription>
-              Coloque seus arquivos JSON de roteiros na pasta{" "}
-              <code className="bg-muted px-2 py-1 rounded">data/scripts</code> e clique em "Carregar Scripts" para
-              importá-los automaticamente no sistema.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
 
       {previewStep ? (
         <div className="space-y-4">
