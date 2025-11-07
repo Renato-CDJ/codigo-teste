@@ -458,7 +458,7 @@ const MOCK_SITUATIONS: ServiceSituation[] = [
     id: "sit-13",
     name: "A Lei 12395/2024 do Estado do Mato Grosso e a Lei 16276/2025 do Rio Grande Sul",
     description:
-      "A Lei 12395/2024 do Estado do Mato Grosso e a Lei 16276/2025 do Rio Grande Sul também determinam que deve ser informado a composição dos valores cobrados quanto ao que efetivamente correspondem, destacando-se o valor originário e seus adicionais (juros, multas, taxas, custas, honorários e outros que, somados, correspondam ao valor total cobrado do consumidor) ao cliente desse estado que solicitar.",
+      "A Lei 12395/2024 do Estado do Mato Grosso e a Lei 16276/2025 do Rio Grande Sul também determinam que deve ser informado a composição dos valores cobrados quanto a o que efetivamente correspondem, destacando-se o valor originário e seus adicionais (juros, multas, taxas, custas, honorários e outros que, somados, correspondam ao valor total cobrado do consumidor) ao cliente desse estado que solicitar.",
     isActive: true,
     createdAt: new Date(),
   },
@@ -1044,16 +1044,21 @@ export function importScriptFromJson(jsonData: JsonData): { productCount: number
         const productId = `prod-${productName.toLowerCase().replace(/\s+/g, "-")}`
 
         Object.entries(productSteps).forEach(([stepKey, stepData]: [string, any]) => {
+          if (!stepData.id || !stepData.title) {
+            console.warn(`[v0] Skipping invalid step: ${stepKey}`)
+            return
+          }
+
           const step: ScriptStep = {
             id: stepData.id,
             productId: productId,
             title: stepData.title || "",
-            content: stepData.body || stepData.content || "", // Map 'body' to 'content' field
+            content: stepData.body || stepData.content || "",
             order: stepData.order || 0,
             buttons: (stepData.buttons || []).map((btn: any, index: number) => ({
               id: `btn-${stepData.id}-${index}`,
               label: btn.label || "",
-              nextStepId: btn.next || btn.nextStepId || null, // Map 'next' to 'nextStepId'
+              nextStepId: btn.next || btn.nextStepId || null,
               primary: btn.primary || false,
               variant: btn.variant || (btn.primary ? "primary" : "secondary"),
               order: btn.order || index,
@@ -1067,16 +1072,20 @@ export function importScriptFromJson(jsonData: JsonData): { productCount: number
 
         if (steps.length > 0) {
           const existingSteps = getScriptSteps()
-          // Remove existing steps for this product
           const filteredSteps = existingSteps.filter((s) => s.productId !== productId)
           const newSteps = [...filteredSteps, ...steps]
           debouncedSave(STORAGE_KEYS.SCRIPT_STEPS, newSteps)
           stepCount += steps.length
 
+          const firstStep =
+            steps.find(
+              (s) => s.title.toLowerCase().includes("abordagem") || s.id.toLowerCase().includes("abordagem"),
+            ) || steps[0]
+
           const product: Product = {
             id: productId,
             name: productName,
-            scriptId: steps[0].id,
+            scriptId: firstStep.id,
             category: productName.toLowerCase() as "habitacional" | "comercial" | "outros",
             isActive: true,
             createdAt: new Date(),
@@ -1094,6 +1103,7 @@ export function importScriptFromJson(jsonData: JsonData): { productCount: number
         }
       })
 
+      clearCaches()
       notifyUpdate()
     }
   } catch (error) {

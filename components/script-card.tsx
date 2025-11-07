@@ -195,19 +195,16 @@ export const ScriptCard = memo(function ScriptCard({
     return () => window.removeEventListener("keydown", handleKeyPress)
   }, [canGoBack, onGoBack])
 
-  const processedContent = useMemo(
-    () => {
-      const safeContent = step.content || ""
-      return safeContent
-        .replace(/\[Nome do operador\]/gi, `<strong>${operatorName}</strong>`)
-        .replace(/\[Primeiro nome do cliente\]/gi, `<strong>${customerFirstName}</strong>`)
-        .replace(/$$Primeiro nome do cliente$$/gi, `<strong>${customerFirstName}</strong>`)
-        .replace(/$$nome completo do cliente$$/gi, `<strong>${customerFirstName}</strong>`)
-        .replace(/\[CPF do cliente\]/gi, "<strong>***.***.***-**</strong>")
-        .replace(/\n/g, "<br>")
-    },
-    [step.content, step.id, operatorName, customerFirstName], // Added step.id for proper cache invalidation
-  )
+  const processedContent = useMemo(() => {
+    const safeContent = step.content || ""
+    return safeContent
+      .replace(/\[Nome do operador\]/gi, `<strong>${operatorName}</strong>`)
+      .replace(/\[Primeiro nome do cliente\]/gi, `<strong>${customerFirstName}</strong>`)
+      .replace(/$$Primeiro nome do cliente$$/gi, `<strong>${customerFirstName}</strong>`)
+      .replace(/$$nome completo do cliente$$/gi, `<strong>${customerFirstName}</strong>`)
+      .replace(/\[CPF do cliente\]/gi, "<strong>***.***.***-**</strong>")
+      .replace(/\n/g, "<br>")
+  }, [step.content, operatorName, customerFirstName])
 
   const highlightedTitle = useMemo(
     () =>
@@ -451,7 +448,7 @@ export const ScriptCard = memo(function ScriptCard({
         <DialogContent className="sm:max-w-2xl shadow-2xl max-h-[80vh] overflow-y-auto border-2 border-orange-200 dark:border-zinc-700">
           <DialogHeader className="space-y-3 pb-4 border-b border-border">
             <DialogTitle className="flex items-center gap-3 text-xl font-bold">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-400 dark:to-orange-500">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-400 dark:to-orange-300">
                 <CheckCircle2 className="h-6 w-6 text-white" />
               </div>
               <span className="bg-gradient-to-r from-orange-600 to-orange-500 dark:from-orange-400 dark:to-orange-300 bg-clip-text text-transparent">

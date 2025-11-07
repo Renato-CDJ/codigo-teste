@@ -201,13 +201,13 @@ export function ScriptsTab() {
       let totalProducts = 0
       let totalSteps = 0
 
-      scripts.forEach((scriptData, index) => {
+      scripts.forEach((scriptData) => {
         try {
           const result = importScriptFromJson(scriptData)
           totalProducts += result.productCount
           totalSteps += result.stepCount
         } catch (error) {
-          console.error(`[v0] Error loading script ${index}:`, error)
+          console.error("[v0] Error loading individual script:", error)
         }
       })
 

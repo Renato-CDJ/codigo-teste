@@ -140,6 +140,10 @@ const OperatorContent = memo(function OperatorContent() {
       } else if (!nextStepId) {
         console.log("[v0] No nextStepId provided - end of script flow")
         alert("Fim do roteiro atingido. Configure o próximo passo no painel administrativo.")
+      } else if (!currentProductId) {
+        console.error("[v0] Missing productId - cannot navigate")
+        alert("Erro: Produto não identificado. Por favor, reinicie o atendimento.")
+        handleBackToStart()
       }
     },
     [currentProductId, handleBackToStart],
