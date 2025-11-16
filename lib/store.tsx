@@ -17,6 +17,10 @@ import type {
   Quiz,
   QuizAttempt,
   AdminPermissions,
+  ChatMessage, // Imported for chat
+  ChatSettings, // Imported for chat
+  Presentation, // Imported for presentations
+  PresentationProgress, // Imported for presentation progress
 } from "./types"
 
 const saveQueue: Map<string, any> = new Map()
@@ -402,7 +406,7 @@ const MOCK_SITUATIONS: ServiceSituation[] = [
     id: "sit-6",
     name: "CLIENTE SOLICITOU A LIGAÇÃO DO ATENDIMENTO",
     description:
-      'CASO O CONTRATO SEJA DOS ESTADOS:\nPARANÁ - DDD (41,42,43,44,45 e 46)\nRIO DE JANEIRO - DDD (21)\nSÃO PAULO - DDD (11)\nMATO GROSSO - DDD (65)\n\nDevemos informar: "A solicitação será repassada à CAIXA para verificação e atendimento no prazo de até 7 (sete) dias úteis."\n\n(PARA OUTROS ESTADOS)\nNesses casos, o que deve ser repassado para o cliente é: "Você pode solicitar a escuta da ligação na sua agência de relacionamento."',
+      'CASO O CONTRATO SEJA DOS ESTADOS:\nPARANÁ - DDD (41,42,43,44,45 e 46)\nRIO DE JANEIRO - DDD (21)\nSÃO PAULO - DDD (11)\nM ATO GROSSO - DDD (65)\n\nDevemos informar: "A solicitação será repassada à CAIXA para verificação e atendimento no prazo de até 7 (sete) dias úteis."\n\n(PARA OUTROS ESTADOS)\nNesses casos, o que deve ser repassado para o cliente é: "Você pode solicitar a escuta da ligação na sua agência de relacionamento."',
     isActive: true,
     createdAt: new Date(),
   },
@@ -533,6 +537,10 @@ const STORAGE_KEYS = {
   MESSAGES: "callcenter_messages",
   QUIZZES: "callcenter_quizzes",
   QUIZ_ATTEMPTS: "callcenter_quiz_attempts",
+  CHAT_MESSAGES: "callcenter_chat_messages",
+  CHAT_SETTINGS: "callcenter_chat_settings",
+  PRESENTATIONS: "callcenter_presentations",
+  PRESENTATION_PROGRESS: "callcenter_presentation_progress",
 }
 
 // Initialize mock data
@@ -606,6 +614,27 @@ export function initializeMockData() {
 
   if (!localStorage.getItem(STORAGE_KEYS.LAST_UPDATE)) {
     localStorage.setItem(STORAGE_KEYS.LAST_UPDATE, Date.now().toString())
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.CHAT_SETTINGS)) {
+    const defaultChatSettings: ChatSettings = {
+      isEnabled: true,
+      updatedAt: new Date(),
+      updatedBy: "system",
+    }
+    localStorage.setItem(STORAGE_KEYS.CHAT_SETTINGS, JSON.stringify(defaultChatSettings))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.CHAT_MESSAGES)) {
+    localStorage.setItem(STORAGE_KEYS.CHAT_MESSAGES, JSON.stringify([]))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.PRESENTATIONS)) {
+    localStorage.setItem(STORAGE_KEYS.PRESENTATIONS, JSON.stringify([]))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.PRESENTATION_PROGRESS)) {
+    localStorage.setItem(STORAGE_KEYS.PRESENTATION_PROGRESS, JSON.stringify([]))
   }
 
   cleanupOldSessions()
@@ -1477,14 +1506,17 @@ export function getMonthlyQuizRanking(year?: number, month?: number): OperatorRa
 
   const now = new Date()
   const targetYear = year ?? now.getFullYear()
-  const targetMonth = month ?? now.getMonth()
+  const targetMonth = month !== undefined ? month : now.getMonth()
 
   const attempts = getQuizAttempts()
 
-  // Filter attempts for the target month
   const monthlyAttempts = attempts.filter((attempt) => {
-    const attemptDate = new Date(attempt.attemptedAt)
-    return attemptDate.getFullYear() === targetYear && attemptDate.getMonth() === targetMonth
+    const attemptDate = attempt.attemptedAt instanceof Date ? attempt.attemptedAt : new Date(attempt.attemptedAt)
+
+    const yearMatch = attemptDate.getFullYear() === targetYear
+    const monthMatch = attemptDate.getMonth() === targetMonth
+
+    return yearMatch && monthMatch
   })
 
   // Group by operator
@@ -1654,4 +1686,241 @@ export function cleanupOldSessions() {
   } catch (error) {
     console.error("[v0] Error cleaning up sessions:", error)
   }
+}
+
+export function getAllChatMessages(): ChatMessage[] {
+  if (typeof window === "undefined") return []
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.CHAT_MESSAGES) || "[]")
+}
+
+export function getChatSettings(): ChatSettings {
+  if (typeof window === "undefined") return { isEnabled: true, updatedAt: new Date(), updatedBy: "system" }
+  return JSON.parse(
+    localStorage.getItem(STORAGE_KEYS.CHAT_SETTINGS) ||
+      JSON.stringify({ isEnabled: true, updatedAt: new Date(), updatedBy: "system" }),
+  )
+}
+
+export function updateChatSettings(settings: ChatSettings) {
+  if (typeof window === "undefined") return
+  debouncedSave(STORAGE_KEYS.CHAT_SETTINGS, settings)
+  notifyUpdate()
+}
+
+export function sendChatMessage(
+  senderId: string,
+  senderName: string,
+  senderRole: "operator" | "admin",
+  content: string,
+  recipientId?: string,
+  attachment?: {
+    type: "image"
+    url: string
+    name: string
+  },
+): ChatMessage {
+  if (typeof window === "undefined")
+    return {
+      id: "",
+      senderId,
+      senderName,
+      senderRole,
+      recipientId,
+      content,
+      attachment,
+      createdAt: new Date(),
+      isRead: false,
+    }
+
+  const newMessage: ChatMessage = {
+    id: `chat-${Date.now()}`,
+    senderId,
+    senderName,
+    senderRole,
+    recipientId,
+    content,
+    attachment,
+    createdAt: new Date(),
+    isRead: false,
+  }
+
+  const messages = getAllChatMessages()
+  messages.push(newMessage)
+  debouncedSave(STORAGE_KEYS.CHAT_MESSAGES, messages)
+  notifyUpdate()
+
+  return newMessage
+}
+
+export function markChatMessageAsRead(messageId: string) {
+  if (typeof window === "undefined") return
+
+  const messages = getAllChatMessages()
+  const message = messages.find((m) => m.id === messageId)
+
+  if (message && !message.isRead) {
+    message.isRead = true
+    debouncedSave(STORAGE_KEYS.CHAT_MESSAGES, messages)
+    notifyUpdate()
+  }
+}
+
+export function getChatMessagesForUser(userId: string, userRole: "operator" | "admin"): ChatMessage[] {
+  const messages = getAllChatMessages()
+
+  if (userRole === "operator") {
+    // Operator sees: messages they sent + messages from admins to them or all operators
+    return messages
+      .filter(
+        (m) => m.senderId === userId || (m.senderRole === "admin" && (!m.recipientId || m.recipientId === userId)),
+      )
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  } else {
+    // Admin sees: all messages from operators + messages they sent
+    return messages
+      .filter((m) => m.senderRole === "operator" || m.senderId === userId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  }
+}
+
+export function getUnreadChatCount(userId: string, userRole: "operator" | "admin"): number {
+  const messages = getChatMessagesForUser(userId, userRole)
+  return messages.filter((m) => !m.isRead && m.senderId !== userId).length
+}
+
+export function deleteChatMessage(messageId: string) {
+  if (typeof window === "undefined") return
+
+  const messages = getAllChatMessages().filter((m) => m.id !== messageId)
+  debouncedSave(STORAGE_KEYS.CHAT_MESSAGES, messages)
+  notifyUpdate()
+}
+
+export function getPresentations(): Presentation[] {
+  if (typeof window === "undefined") return []
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.PRESENTATIONS) || "[]")
+}
+
+export function getActivePresentations(): Presentation[] {
+  return getPresentations().filter((p) => p.isActive)
+}
+
+export function getActivePresentationsForOperator(operatorId: string): Presentation[] {
+  return getActivePresentations().filter((p) => {
+    if (p.recipients && p.recipients.length > 0) {
+      return p.recipients.includes(operatorId)
+    }
+    return true // Empty recipients means for all operators
+  })
+}
+
+export function createPresentation(presentation: Omit<Presentation, "id" | "createdAt" | "updatedAt">): Presentation {
+  if (typeof window === "undefined") return { ...presentation, id: "", createdAt: new Date(), updatedAt: new Date() }
+
+  const newPresentation: Presentation = {
+    ...presentation,
+    id: `pres-${Date.now()}`,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+
+  const presentations = getPresentations()
+  presentations.push(newPresentation)
+  debouncedSave(STORAGE_KEYS.PRESENTATIONS, presentations)
+  notifyUpdate()
+
+  return newPresentation
+}
+
+export function updatePresentation(presentation: Presentation) {
+  if (typeof window === "undefined") return
+
+  const presentations = getPresentations()
+  const index = presentations.findIndex((p) => p.id === presentation.id)
+
+  if (index !== -1) {
+    presentations[index] = { ...presentation, updatedAt: new Date() }
+    debouncedSave(STORAGE_KEYS.PRESENTATIONS, presentations)
+    notifyUpdate()
+  }
+}
+
+export function deletePresentation(id: string) {
+  if (typeof window === "undefined") return
+
+  const presentations = getPresentations().filter((p) => p.id !== id)
+  debouncedSave(STORAGE_KEYS.PRESENTATIONS, presentations)
+  notifyUpdate()
+}
+
+// Presentation Progress tracking
+export function getPresentationProgress(): PresentationProgress[] {
+  if (typeof window === "undefined") return []
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.PRESENTATION_PROGRESS) || "[]")
+}
+
+export function getPresentationProgressByOperator(operatorId: string): PresentationProgress[] {
+  return getPresentationProgress().filter((p) => p.operatorId === operatorId)
+}
+
+export function getPresentationProgressByPresentation(presentationId: string): PresentationProgress[] {
+  return getPresentationProgress().filter((p) => p.presentationId === presentationId)
+}
+
+export function markPresentationAsSeen(presentationId: string, operatorId: string, operatorName: string) {
+  if (typeof window === "undefined") return
+
+  const progress = getPresentationProgress()
+  const existing = progress.find((p) => p.presentationId === presentationId && p.operatorId === operatorId)
+
+  if (existing) {
+    existing.marked_as_seen = true
+    existing.completion_date = new Date()
+  } else {
+    const newProgress: PresentationProgress = {
+      id: `prog-${Date.now()}`,
+      presentationId,
+      operatorId,
+      operatorName,
+      viewedAt: new Date(),
+      marked_as_seen: true,
+      completion_date: new Date(),
+    }
+    progress.push(newProgress)
+  }
+
+  debouncedSave(STORAGE_KEYS.PRESENTATION_PROGRESS, progress)
+  notifyUpdate()
+}
+
+export function exportPresentationReport(presentationId: string): string {
+  const presentation = getPresentations().find((p) => p.id === presentationId)
+  const progressList = getPresentationProgressByPresentation(presentationId)
+
+  if (!presentation) {
+    return ""
+  }
+
+  // Create CSV content
+  let csvContent = "data:text/csv;charset=utf-8,"
+
+  // Header
+  csvContent += "Relatório de Treinamento - Apresentação\n\n"
+  csvContent += `Título:,${presentation.title.replace(/,/g, ";")}\n`
+  csvContent += `Descrição:,${presentation.description.replace(/,/g, ";")}\n`
+  csvContent += `Total de Slides:,${presentation.slides.length}\n`
+  csvContent += `Criada por:,${presentation.createdByName}\n`
+  csvContent += `Data de criação:,${new Date(presentation.createdAt).toLocaleDateString("pt-BR")}\n`
+  csvContent += `Total de Operadores que Visualizaram:,${progressList.filter((p) => p.marked_as_seen).length}\n\n`
+
+  // Progress details
+  csvContent += "Detalhes de Visualização:\n"
+  csvContent += "Operador,Data de Visualização,Hora,Marcado como Visto\n"
+
+  progressList.forEach((progress) => {
+    const date = new Date(progress.viewedAt)
+    csvContent += `${progress.operatorName},${date.toLocaleDateString("pt-BR")},${date.toLocaleTimeString("pt-BR")},${progress.marked_as_seen ? "Sim" : "Não"}\n`
+  })
+
+  return csvContent
 }

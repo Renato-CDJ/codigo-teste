@@ -30,9 +30,13 @@ const NotesTab = lazy(() => import("@/components/admin-tabs/notes-tab").then((m)
 const MessagesQuizTab = lazy(() =>
   import("@/components/admin-tabs/messages-quiz-tab").then((m) => ({ default: m.MessagesQuizTab })),
 )
+const ChatTab = lazy(() => import("@/components/admin-tabs/chat-tab").then((m) => ({ default: m.ChatTab })))
 const SettingsPage = lazy(() => import("@/app/admin/settings/page"))
 const AccessControlTab = lazy(() =>
   import("@/components/admin-tabs/access-control-tab").then((m) => ({ default: m.AccessControlTab })),
+)
+const PresentationsTab = lazy(() =>
+  import("@/components/admin-tabs/presentations-tab").then((m) => ({ default: m.PresentationsTab })),
 )
 
 const LoadingFallback = memo(function LoadingFallback() {
@@ -118,6 +122,12 @@ const AdminContent = memo(function AdminContent() {
             <MessagesQuizTab />
           </Suspense>
         )
+      case "chat":
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <ChatTab />
+          </Suspense>
+        )
       case "settings":
         return (
           <Suspense fallback={<LoadingFallback />}>
@@ -128,6 +138,12 @@ const AdminContent = memo(function AdminContent() {
         return (
           <Suspense fallback={<LoadingFallback />}>
             <AccessControlTab />
+          </Suspense>
+        )
+      case "presentations":
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <PresentationsTab />
           </Suspense>
         )
       default:

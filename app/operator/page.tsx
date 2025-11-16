@@ -6,6 +6,7 @@ import { OperatorHeader } from "@/components/operator-header"
 import { OperatorSidebar } from "@/components/operator-sidebar"
 import { ScriptCard } from "@/components/script-card"
 import { AttendanceConfig } from "@/components/attendance-config"
+import { OperatorChatModal } from "@/components/operator-chat-modal"
 import { useAuth } from "@/lib/auth-context"
 import { getScriptSteps, getScriptStepById, getProductById } from "@/lib/store"
 import type { ScriptStep, AttendanceConfig as AttendanceConfigType } from "@/lib/types"
@@ -23,6 +24,7 @@ const OperatorContent = memo(function OperatorContent() {
   const [attendanceConfig, setAttendanceConfig] = useState<AttendanceConfigType | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [currentProductId, setCurrentProductId] = useState<string | null>(null)
+  const [showChatModal, setShowChatModal] = useState(false)
 
   const handleBackToStart = useCallback(() => {
     setIsSessionActive(false)
@@ -210,6 +212,7 @@ const OperatorContent = memo(function OperatorContent() {
         isSessionActive={isSessionActive}
         onBackToStart={handleBackToStart}
         onProductSelect={handleProductSelect}
+        onOpenChat={() => setShowChatModal(true)}
       />
 
       <div className="flex flex-1 overflow-hidden min-h-0">
@@ -246,6 +249,8 @@ const OperatorContent = memo(function OperatorContent() {
 
         {isSessionActive && <OperatorSidebar isOpen={isSidebarOpen} />}
       </div>
+
+      <OperatorChatModal isOpen={showChatModal} onClose={() => setShowChatModal(false)} />
     </div>
   )
 })
