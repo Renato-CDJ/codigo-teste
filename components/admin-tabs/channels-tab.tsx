@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Plus, Edit, Trash2, Save, X, ExternalLink, Copy } from "lucide-react"
+import { Plus, Edit, Trash2, Save, X, ExternalLink, Copy } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { getChannels } from "@/lib/store"
 import type { Channel } from "@/lib/types"
@@ -47,25 +47,20 @@ export function ChannelsTab() {
     if (!editingItem) return
 
     if (isCreating) {
-      const newChannels = [...channels, editingItem]
-      localStorage.setItem("callcenter_channels", JSON.stringify(newChannels))
-      setChannels(newChannels)
+      console.log("Creating channel:", editingItem)
+      
       toast({
         title: "Canal criado",
         description: "O novo canal foi criado com sucesso.",
       })
     } else {
-      const updatedChannels = channels.map((c) => (c.id === editingItem.id ? editingItem : c))
-      localStorage.setItem("callcenter_channels", JSON.stringify(updatedChannels))
-      setChannels(updatedChannels)
+      console.log("Updating channel:", editingItem)
+      
       toast({
         title: "Canal atualizado",
         description: "As alterações foram salvas com sucesso.",
       })
     }
-
-    localStorage.setItem("callcenter_last_update", Date.now().toString())
-    window.dispatchEvent(new CustomEvent("store-updated"))
 
     setEditingItem(null)
     setIsCreating(false)
@@ -73,12 +68,7 @@ export function ChannelsTab() {
 
   const handleDelete = (id: string) => {
     if (confirm("Tem certeza que deseja excluir este canal?")) {
-      const updatedChannels = channels.filter((c) => c.id !== id)
-      localStorage.setItem("callcenter_channels", JSON.stringify(updatedChannels))
-      setChannels(updatedChannels)
-
-      localStorage.setItem("callcenter_last_update", Date.now().toString())
-      window.dispatchEvent(new CustomEvent("store-updated"))
+      console.log("Deleting channel:", id)
 
       toast({
         title: "Canal excluído",

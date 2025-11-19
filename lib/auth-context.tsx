@@ -19,18 +19,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Initialize mock data on first load
-    initializeMockData()
-
-    // Check for existing session
-    const currentUser = getCurrentUser()
-    setUser(currentUser)
-    setIsLoading(false)
-
+    const init = async () => {
+      try {
+        await initializeMockData()
+        
+        // Check for existing session
+        const currentUser = getCurrentUser()
+        setUser(currentUser)
+      } catch (error) {
+        console.error("Failed to initialize auth:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    init()
     cleanupOldSessions()
   }, [])
 
-  const logout = useCallback(() => {
-    logoutUser()
+  const logout = useCallback(async () => {
+    await logoutUser()
     setUser(null)
   }, [])
 

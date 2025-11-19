@@ -10,7 +10,7 @@ import { OperatorChatModal } from "@/components/operator-chat-modal"
 import { useAuth } from "@/lib/auth-context"
 import { getScriptSteps, getScriptStepById, getProductById } from "@/lib/store"
 import type { ScriptStep, AttendanceConfig as AttendanceConfigType } from "@/lib/types"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 
 const OperatorContent = memo(function OperatorContent() {
   const { user, logout } = useAuth()
@@ -56,23 +56,17 @@ const OperatorContent = memo(function OperatorContent() {
   }, [logout, router])
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout
-
     const handleStoreUpdate = () => {
       if (currentStep && currentProductId) {
-        clearTimeout(timeoutId)
-        timeoutId = setTimeout(() => {
-          const updatedStep = getScriptStepById(currentStep.id, currentProductId)
-          if (updatedStep) {
-            setCurrentStep(updatedStep)
-          }
-        }, 150)
+        const updatedStep = getScriptStepById(currentStep.id, currentProductId)
+        if (updatedStep) {
+          setCurrentStep(updatedStep)
+        }
       }
     }
 
     window.addEventListener("store-updated", handleStoreUpdate)
     return () => {
-      clearTimeout(timeoutId)
       window.removeEventListener("store-updated", handleStoreUpdate)
     }
   }, [currentStep, currentProductId])

@@ -1,6 +1,7 @@
 // Client-side state management using localStorage for prototype
 // This will be replaced with real database integration later
 
+import { createClient } from "@/lib/supabase/client"
 import type {
   User,
   ScriptStep,
@@ -17,11 +18,88 @@ import type {
   Quiz,
   QuizAttempt,
   AdminPermissions,
-  ChatMessage, // Imported for chat
-  ChatSettings, // Imported for chat
-  Presentation, // Imported for presentations
-  PresentationProgress, // Imported for presentation progress
+  ChatMessage,
+  ChatSettings,
+  Presentation,
+  PresentationProgress,
 } from "./types"
+
+// Initialize Supabase client
+const supabase = createClient()
+
+// Cache for data
+let cachedUsers: User[] = []
+let cachedScriptSteps: ScriptStep[] = []
+let cachedTabulations: Tabulation[] = []
+let cachedSituations: ServiceSituation[] = []
+let cachedChannels: Channel[] = []
+let cachedProducts: Product[] = []
+let cachedMessages: Message[] = []
+let cachedQuizzes: Quiz[] = []
+let cachedChatMessages: ChatMessage[] = []
+let cachedPresentations: Presentation[] = []
+
+// Initialize real-time subscriptions
+export function initializeRealtimeSubscriptions() {
+  if (typeof window === "undefined") return
+
+  // Subscribe to changes in all tables
+  const channel = supabase
+    .channel("db-changes")
+    .on("postgres_changes", { event: "*", schema: "public", table: "users" }, (payload) => {
+      handleUserChange(payload)
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "script_steps" }, (payload) => {
+      handleScriptStepChange(payload)
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, (payload) => {
+      handleChatMessageChange(payload)
+    })
+    // Add more subscriptions as needed
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
+
+function handleUserChange(payload: any) {
+  // Update local cache and notify listeners
+  if (payload.eventType === "INSERT") {
+    cachedUsers.push(payload.new)
+  } else if (payload.eventType === "UPDATE") {
+    const index = cachedUsers.findIndex((u) => u.id === payload.new.id)
+    if (index !== -1) cachedUsers[index] = payload.new
+  } else if (payload.eventType === "DELETE") {
+    cachedUsers = cachedUsers.filter((u) => u.id !== payload.old.id)
+  }
+  notifyUpdate()
+}
+
+function handleScriptStepChange(payload: any) {
+  if (payload.eventType === "INSERT") {
+    cachedScriptSteps.push(payload.new)
+  } else if (payload.eventType === "UPDATE") {
+    const index = cachedScriptSteps.findIndex((s) => s.id === payload.new.id)
+    if (index !== -1) cachedScriptSteps[index] = payload.new
+  } else if (payload.eventType === "DELETE") {
+    cachedScriptSteps = cachedScriptSteps.filter((s) => s.id !== payload.old.id)
+  }
+  clearCaches()
+  notifyUpdate()
+}
+
+function handleChatMessageChange(payload: any) {
+  if (payload.eventType === "INSERT") {
+    cachedChatMessages.push(payload.new)
+  } else if (payload.eventType === "UPDATE") {
+    const index = cachedChatMessages.findIndex((m) => m.id === payload.new.id)
+    if (index !== -1) cachedChatMessages[index] = payload.new
+  } else if (payload.eventType === "DELETE") {
+    cachedChatMessages = cachedChatMessages.filter((m) => m.id !== payload.old.id)
+  }
+  notifyUpdate()
+}
 
 const saveQueue: Map<string, any> = new Map()
 let saveTimeout: NodeJS.Timeout | null = null
@@ -38,7 +116,9 @@ function debouncedSave(key: string, data: any) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(value))
       } catch (error) {
-        console.error(`[v0] Error saving ${storageKey}:`, error)
+        if (error instanceof Error && error.message.includes("QuotaExceededError")) {
+          console.error(`Storage quota exceeded for ${storageKey}`)
+        }
       }
     })
     saveQueue.clear()
@@ -237,7 +317,7 @@ const MOCK_TABULATIONS: Tabulation[] = [
   {
     id: "tab-10",
     name: "RECUSA AÇÃO/CAMPANHA",
-    description: "Cliente não aceita a ação/campanha ofertada.",
+    description: "Cliente não aceita a ação/ campanha ofertada.",
     color: "#ef4444",
     createdAt: new Date(),
   },
@@ -543,197 +623,249 @@ const STORAGE_KEYS = {
   PRESENTATION_PROGRESS: "callcenter_presentation_progress",
 }
 
-// Initialize mock data
-export function initializeMockData() {
+export async function initializeMockData() {
   if (typeof window === "undefined") return
 
-  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(MOCK_USERS))
-  console.log(
-    "[v0] Users initialized:",
-    MOCK_USERS.map((u) => u.username),
-  )
+  try {
+    // Fetch initial data
+    const { data: users } = await supabase.from("users").select("*")
+    if (users) cachedUsers = users as User[]
 
-  if (!localStorage.getItem(STORAGE_KEYS.SCRIPT_STEPS)) {
-    localStorage.setItem(STORAGE_KEYS.SCRIPT_STEPS, JSON.stringify([]))
+    const { data: steps } = await supabase.from("script_steps").select("*")
+    if (steps) cachedScriptSteps = steps as ScriptStep[]
+
+    const { data: tabulations } = await supabase.from("tabulations").select("*")
+    if (tabulations) cachedTabulations = tabulations as Tabulation[]
+
+    const { data: situations } = await supabase.from("service_situations").select("*")
+    if (situations) cachedSituations = situations as ServiceSituation[]
+
+    const { data: channels } = await supabase.from("channels").select("*")
+    if (channels) cachedChannels = channels as Channel[]
+
+    const { data: products } = await supabase.from("products").select("*")
+    if (products) cachedProducts = products as Product[]
+
+    const { data: messages } = await supabase.from("messages").select("*")
+    if (messages) cachedMessages = messages as Message[]
+
+    const { data: quizzes } = await supabase.from("quizzes").select("*")
+    if (quizzes) cachedQuizzes = quizzes as Quiz[]
+
+    const { data: chatMessages } = await supabase.from("chat_messages").select("*")
+    if (chatMessages) cachedChatMessages = chatMessages as ChatMessage[]
+
+    const { data: presentations } = await supabase.from("presentations").select("*")
+    if (presentations) cachedPresentations = presentations as Presentation[]
+
+    // Initialize subscriptions
+    initializeRealtimeSubscriptions()
+    
+    console.log("[v0] Data initialized from Supabase")
+  } catch (error) {
+    console.error("[v0] Error initializing data:", error)
   }
-
-  localStorage.setItem(STORAGE_KEYS.TABULATIONS, JSON.stringify(MOCK_TABULATIONS))
-
-  localStorage.setItem(STORAGE_KEYS.SITUATIONS, JSON.stringify(MOCK_SITUATIONS))
-
-  if (!localStorage.getItem(STORAGE_KEYS.CHANNELS)) {
-    localStorage.setItem(STORAGE_KEYS.CHANNELS, JSON.stringify(MOCK_CHANNELS))
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.NOTES)) {
-    localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify([]))
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SESSIONS)) {
-    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify([]))
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify([]))
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.ATTENDANCE_TYPES)) {
-    const defaultAttendanceTypes: AttendanceTypeOption[] = [
-      {
-        id: "att-ativo",
-        value: "ativo",
-        label: "Ativo",
-        createdAt: new Date(),
-      },
-      {
-        id: "att-receptivo",
-        value: "receptivo",
-        label: "Receptivo",
-        createdAt: new Date(),
-      },
-    ]
-    localStorage.setItem(STORAGE_KEYS.ATTENDANCE_TYPES, JSON.stringify(defaultAttendanceTypes))
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.PERSON_TYPES)) {
-    const defaultPersonTypes: PersonTypeOption[] = [
-      {
-        id: "per-fisica",
-        value: "fisica",
-        label: "Física",
-        createdAt: new Date(),
-      },
-      {
-        id: "per-juridica",
-        value: "juridica",
-        label: "Jurídica",
-        createdAt: new Date(),
-      },
-    ]
-    localStorage.setItem(STORAGE_KEYS.PERSON_TYPES, JSON.stringify(defaultPersonTypes))
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.LAST_UPDATE)) {
-    localStorage.setItem(STORAGE_KEYS.LAST_UPDATE, Date.now().toString())
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.CHAT_SETTINGS)) {
-    const defaultChatSettings: ChatSettings = {
-      isEnabled: true,
-      updatedAt: new Date(),
-      updatedBy: "system",
-    }
-    localStorage.setItem(STORAGE_KEYS.CHAT_SETTINGS, JSON.stringify(defaultChatSettings))
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.CHAT_MESSAGES)) {
-    localStorage.setItem(STORAGE_KEYS.CHAT_MESSAGES, JSON.stringify([]))
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.PRESENTATIONS)) {
-    localStorage.setItem(STORAGE_KEYS.PRESENTATIONS, JSON.stringify([]))
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.PRESENTATION_PROGRESS)) {
-    localStorage.setItem(STORAGE_KEYS.PRESENTATION_PROGRESS, JSON.stringify([]))
-  }
-
-  cleanupOldSessions()
-
-  loadScriptsFromDataFolder()
 }
 
-// User authentication
-export function authenticateUser(username: string, password: string): User | null {
-  if (typeof window === "undefined") return null
+export async function authenticateUser(username: string, password: string): Promise<User | null> {
+  try {
+    // For this implementation, we'll check against our users table since we're migrating
+    // In a full Supabase Auth implementation, we would use supabase.auth.signInWithPassword
+    
+    const { data: user } = await supabase
+      .from("users")
+      .select("*")
+      .eq("username", username)
+      .single()
 
-  const users: User[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
+    if (!user) return null
 
-  const user = users.find((u) => u.username.toLowerCase() === username.toLowerCase())
-
-  if (user) {
+    // Simple password check for migration (should be replaced with proper auth)
     if (user.role === "admin") {
       const validPasswords = ["rcp@$", "#qualidade@$"]
-
-      if (!validPasswords.includes(password)) {
-        return null
-      }
-
-      const session: LoginSession = {
-        id: `session-${Date.now()}`,
-        loginAt: new Date(),
-      }
-
-      user.lastLoginAt = new Date()
-      user.isOnline = true
-      user.loginSessions = user.loginSessions || []
-      user.loginSessions.push(session)
-
-      // Update user in storage
-      const updatedUsers = users.map((u) => (u.id === user.id ? user : u))
-      debouncedSave(STORAGE_KEYS.USERS, updatedUsers)
-
-      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user))
-      return user
+      if (!validPasswords.includes(password)) return null
     }
 
-    const session: LoginSession = {
-      id: `session-${Date.now()}`,
-      loginAt: new Date(),
+    // Update user status
+    await supabase
+      .from("users")
+      .update({ 
+        is_online: true, 
+        last_login_at: new Date().toISOString() 
+      })
+      .eq("id", user.id)
+
+    // Create login session
+    await supabase.from("login_sessions").insert({
+      user_id: user.id,
+      login_at: new Date().toISOString()
+    })
+
+    // Update local cache
+    const userIndex = cachedUsers.findIndex(u => u.id === user.id);
+    if (userIndex !== -1) {
+      cachedUsers[userIndex] = {
+        ...user,
+        last_login_at: user.last_login_at ? new Date(user.last_login_at) : undefined,
+        created_at: user.created_at ? new Date(user.created_at) : undefined,
+        login_sessions: user.login_sessions || [] // Assuming login_sessions might be fetched separately or populated later
+      };
+    } else {
+      cachedUsers.push({
+        ...user,
+        last_login_at: user.last_login_at ? new Date(user.last_login_at) : undefined,
+        created_at: user.created_at ? new Date(user.created_at) : undefined,
+        login_sessions: user.login_sessions || []
+      });
     }
+    
+    // Also update localStorage for immediate access in components
+    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify({
+      ...user,
+      last_login_at: user.last_login_at ? new Date(user.last_login_at) : undefined,
+      created_at: user.created_at ? new Date(user.created_at) : undefined,
+      login_sessions: user.login_sessions || []
+    }));
 
-    user.lastLoginAt = new Date()
-    user.isOnline = true
-    user.loginSessions = user.loginSessions || []
-    user.loginSessions.push(session)
+    notifyUpdate(); // Notify about the user update
 
-    // Update user in storage
-    const updatedUsers = users.map((u) => (u.id === user.id ? user : u))
-    debouncedSave(STORAGE_KEYS.USERS, updatedUsers)
-
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user))
-    return user
+    return user;
+  } catch (error) {
+    console.error("[v0] Auth error:", error)
+    return null
   }
-
-  return null
 }
 
 export function getCurrentUser(): User | null {
   if (typeof window === "undefined") return null
-
+  // For synchronous access in components, we still use localStorage as a cache
   const userStr = localStorage.getItem(STORAGE_KEYS.CURRENT_USER)
-  return userStr ? JSON.parse(userStr) : null
+  if (!userStr) return null;
+
+  const user = JSON.parse(userStr);
+  // Convert dates back to Date objects if they exist
+  if (user.createdAt) user.createdAt = new Date(user.createdAt);
+  if (user.updatedAt) user.updatedAt = new Date(user.updatedAt);
+  if (user.lastLoginAt) user.lastLoginAt = new Date(user.lastLoginAt);
+  if (user.loginSessions) {
+    user.loginSessions = user.loginSessions.map((session: any) => ({
+      ...session,
+      loginAt: new Date(session.loginAt),
+      logoutAt: session.logoutAt ? new Date(session.logoutAt) : undefined,
+    }));
+  }
+  return user;
 }
 
-export function logout() {
-  if (typeof window === "undefined") return
-
+export async function logout() {
   const currentUser = getCurrentUser()
-  if (currentUser && currentUser.loginSessions && currentUser.loginSessions.length > 0) {
-    const users: User[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
-    const user = users.find((u) => u.id === currentUser.id)
-
-    if (user && user.loginSessions) {
-      const lastSession = user.loginSessions[user.loginSessions.length - 1]
-      if (!lastSession.logoutAt) {
-        lastSession.logoutAt = new Date()
-        lastSession.duration = lastSession.logoutAt.getTime() - new Date(lastSession.loginAt).getTime()
-        user.isOnline = false
-
-        // Update user in storage
-        const updatedUsers = users.map((u) => (u.id === user.id ? user : u))
-        debouncedSave(STORAGE_KEYS.USERS, updatedUsers)
-        notifyUpdate()
+  if (currentUser) {
+    try {
+      await supabase
+        .from("users")
+        .update({ is_online: false })
+        .eq("id", currentUser.id)
+        
+      // Close session
+      const { data: sessions } = await supabase
+        .from("login_sessions")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .is("logout_at", null)
+        .order("login_at", { ascending: false })
+        .limit(1)
+        
+      if (sessions && sessions.length > 0) {
+        const session = sessions[0]
+        const logoutTime = new Date()
+        const duration = logoutTime.getTime() - new Date(session.login_at).getTime()
+        
+        await supabase
+          .from("login_sessions")
+          .update({ 
+            logout_at: logoutTime.toISOString(),
+            duration 
+          })
+          .eq("id", session.id)
       }
+    } catch (error) {
+      console.error("[v0] Logout error:", error)
     }
   }
-
+  
   localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
+  // Update cache and notify
+  const userIndex = cachedUsers.findIndex(u => u.id === currentUser?.id);
+  if (userIndex !== -1) {
+    cachedUsers[userIndex].isOnline = false;
+    notifyUpdate();
+  }
+
+  if (typeof window !== "undefined") {
+    window.location.href = "/login"
+  }
 }
 
 // Script steps
 export function getScriptSteps(): ScriptStep[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.SCRIPT_STEPS) || "[]")
+  return cachedScriptSteps
+}
+
+export async function createScriptStep(step: Omit<ScriptStep, "id" | "createdAt" | "updatedAt">): Promise<ScriptStep> {
+  const newStep = {
+    ...step,
+    id: `step-${Date.now()}`, // Temporary ID, Supabase will generate UUID if we change schema
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabase
+    .from("script_steps")
+    .insert(newStep)
+    .select()
+    .single()
+
+  if (error) throw error
+  // Add to cache
+  cachedScriptSteps.push({
+    ...data,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at),
+  })
+  notifyUpdate()
+  return {
+    ...data,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at),
+  }
+}
+
+export async function updateScriptStep(step: ScriptStep) {
+  const { error } = await supabase
+    .from("script_steps")
+    .update({ ...step, updated_at: new Date().toISOString() })
+    .eq("id", step.id)
+
+  if (error) throw error
+  // Update cache
+  const index = cachedScriptSteps.findIndex((s) => s.id === step.id)
+  if (index !== -1) {
+    cachedScriptSteps[index] = { ...step, updatedAt: new Date(step.updatedAt || Date.now()) }
+    notifyUpdate()
+  }
+}
+
+export async function deleteScriptStep(id: string) {
+  const { error } = await supabase
+    .from("script_steps")
+    .delete()
+    .eq("id", id)
+
+  if (error) throw error
+  // Update cache
+  cachedScriptSteps = cachedScriptSteps.filter((s) => s.id !== id)
+  notifyUpdate()
 }
 
 export function getScriptStepById(id: string, productId?: string): ScriptStep | null {
@@ -825,19 +957,19 @@ export function deleteScriptStep(id: string) {
 // Tabulations
 export function getTabulations(): Tabulation[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.TABULATIONS) || "[]")
+  return cachedTabulations
 }
 
 // Situations
 export function getSituations(): ServiceSituation[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.SITUATIONS) || "[]")
+  return cachedSituations
 }
 
 // Channels
 export function getChannels(): Channel[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.CHANNELS) || "[]")
+  return cachedChannels
 }
 
 // Notes
@@ -904,7 +1036,7 @@ export function updateCallSession(session: CallSession) {
 // Products
 export function getProducts(): Product[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS) || "[]")
+  return cachedProducts
 }
 
 export function createProduct(product: Omit<Product, "id" | "createdAt">): Product {
@@ -943,13 +1075,13 @@ export function deleteProduct(id: string) {
 
   const products = getProducts().filter((p) => p.id !== id)
   debouncedSave(STORAGE_KEYS.PRODUCTS, products)
-  notifyUpdate() // Notify about update
+  notifyUpdate()
 }
 
 // Additional user management functions
 export function getAllUsers(): User[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
+  return cachedUsers
 }
 
 export function updateUser(user: User) {
@@ -1048,6 +1180,8 @@ function notifyUpdate() {
   }
 
   updateTimeout = setTimeout(() => {
+    // For Supabase, we rely on real-time subscriptions for updates.
+    // This localStorage update is more for local cache invalidation if needed.
     localStorage.setItem(STORAGE_KEYS.LAST_UPDATE, Date.now().toString())
     window.dispatchEvent(new CustomEvent("store-updated"))
   }, 300) // Increased from 100ms to reduce event frequency
@@ -1280,7 +1414,7 @@ export function deletePersonType(id: string) {
 // Messages management functions
 export function getMessages(): Message[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.MESSAGES) || "[]")
+  return cachedMessages
 }
 
 export function getActiveMessages(): Message[] {
@@ -1379,7 +1513,7 @@ export function getHistoricalMessagesForOperator(operatorId: string): Message[] 
 // Quizzes management functions
 export function getQuizzes(): Quiz[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.QUIZZES) || "[]")
+  return cachedQuizzes
 }
 
 export function getActiveQuizzes(): Quiz[] {
@@ -1391,7 +1525,7 @@ export function createQuiz(quiz: Omit<Quiz, "id" | "createdAt">): Quiz {
 
   const newQuiz: Quiz = {
     ...quiz,
-    id: `quiz-${Date.now()}`,
+    id: `quiz-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // More unique IDs to avoid collisions
     createdAt: new Date(),
   }
 
@@ -1519,19 +1653,33 @@ export function getMonthlyQuizRanking(year?: number, month?: number): OperatorRa
     return yearMatch && monthMatch
   })
 
+  const allUsers = getAllUsers()
+  const operatorUsers = allUsers.filter(u => u.role === "operator")
+  const operatorIds = new Set(operatorUsers.map(u => u.id))
+
   // Group by operator
-  const operatorStats = new Map<string, { name: string; total: number; correct: number }>()
+  const operatorStats = new Map<string, { name: string; total: number; correct: number; firstAttempt: Date }>()
 
   monthlyAttempts.forEach((attempt) => {
+    if (!operatorIds.has(attempt.operatorId)) {
+      return // Skip non-operator users
+    }
+
     const existing = operatorStats.get(attempt.operatorId) || {
       name: attempt.operatorName,
       total: 0,
       correct: 0,
+      firstAttempt: new Date(attempt.attemptedAt),
     }
 
     existing.total++
     if (attempt.isCorrect) {
       existing.correct++
+    }
+    
+    const attemptDate = new Date(attempt.attemptedAt)
+    if (attemptDate < existing.firstAttempt) {
+      existing.firstAttempt = attemptDate
     }
 
     operatorStats.set(attempt.operatorId, existing)
@@ -1548,10 +1696,10 @@ export function getMonthlyQuizRanking(year?: number, month?: number): OperatorRa
     rank: 0, // Will be set after sorting
   }))
 
-  // Sort by score (descending), then by accuracy (descending)
   rankings.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
-    return b.accuracy - a.accuracy
+    if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy
+    return a.totalAttempts - b.totalAttempts // More attempts = lower rank on tie
   })
 
   // Assign ranks
@@ -1690,7 +1838,7 @@ export function cleanupOldSessions() {
 
 export function getAllChatMessages(): ChatMessage[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.CHAT_MESSAGES) || "[]")
+  return cachedChatMessages
 }
 
 export function getChatSettings(): ChatSettings {
@@ -1798,7 +1946,7 @@ export function deleteChatMessage(messageId: string) {
 
 export function getPresentations(): Presentation[] {
   if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(STORAGE_KEYS.PRESENTATIONS) || "[]")
+  return cachedPresentations
 }
 
 export function getActivePresentations(): Presentation[] {
