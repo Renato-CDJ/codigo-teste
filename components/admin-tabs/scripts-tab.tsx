@@ -8,22 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RichTextEditorWYSIWYG } from "@/components/rich-text-editor-wysiwyg"
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Save,
-  X,
-  Eye,
-  Upload,
-  ChevronDown,
-  ChevronRight,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  AlertCircle,
-} from "lucide-react"
+import { Plus, Edit, Trash2, Save, X, Eye, Upload, ChevronDown, ChevronRight, AlignLeft, AlignCenter, AlignRight, AlignJustify, AlertCircle } from 'lucide-react'
 import {
   getScriptSteps,
   updateScriptStep,
@@ -254,36 +239,54 @@ export function ScriptsTab() {
     setPreviewStep(null)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingStep) return
 
-    if (isCreating) {
-      createScriptStep(editingStep)
+    try {
+      if (isCreating) {
+        await createScriptStep(editingStep)
+        toast({
+          title: "Roteiro criado",
+          description: "O novo roteiro foi criado com sucesso.",
+        })
+      } else {
+        await updateScriptStep(editingStep)
+        toast({
+          title: "Roteiro atualizado",
+          description: "As alterações foram salvas com sucesso.",
+        })
+      }
+
+      refreshSteps()
+      setEditingStep(null)
+      setIsCreating(false)
+    } catch (error) {
+      console.error("Error saving script:", error)
       toast({
-        title: "Roteiro criado",
-        description: "O novo roteiro foi criado com sucesso.",
-      })
-    } else {
-      updateScriptStep(editingStep)
-      toast({
-        title: "Roteiro atualizado",
-        description: "As alterações foram salvas com sucesso.",
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar o roteiro.",
+        variant: "destructive",
       })
     }
-
-    refreshSteps()
-    setEditingStep(null)
-    setIsCreating(false)
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Tem certeza que deseja excluir este roteiro?")) {
-      deleteScriptStep(id)
-      refreshSteps()
-      toast({
-        title: "Roteiro excluído",
-        description: "O roteiro foi removido com sucesso.",
-      })
+      try {
+        await deleteScriptStep(id)
+        refreshSteps()
+        toast({
+          title: "Roteiro excluído",
+          description: "O roteiro foi removido com sucesso.",
+        })
+      } catch (error) {
+        console.error("Error deleting script:", error)
+        toast({
+          title: "Erro ao excluir",
+          description: "Ocorreu um erro ao excluir o roteiro.",
+          variant: "destructive",
+        })
+      }
     }
   }
 

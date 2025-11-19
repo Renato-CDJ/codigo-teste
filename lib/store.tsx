@@ -914,45 +914,6 @@ export function getProductById(id: string): Product | null {
   return product
 }
 
-export function updateScriptStep(step: ScriptStep) {
-  if (typeof window === "undefined") return
-
-  const steps = getScriptSteps()
-  const index = steps.findIndex((s) => s.id === step.id)
-
-  if (index !== -1) {
-    steps[index] = { ...step, updatedAt: new Date() }
-    debouncedSave(STORAGE_KEYS.SCRIPT_STEPS, steps)
-    clearCaches() // Clear cache
-    notifyUpdate()
-  }
-}
-
-export function createScriptStep(step: Omit<ScriptStep, "id" | "createdAt" | "updatedAt">): ScriptStep {
-  if (typeof window === "undefined") return { ...step, id: "", createdAt: new Date(), updatedAt: new Date() }
-
-  const newStep: ScriptStep = {
-    ...step,
-    id: `step-${Date.now()}`,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  const steps = getScriptSteps()
-  steps.push(newStep)
-  debouncedSave(STORAGE_KEYS.SCRIPT_STEPS, steps)
-  notifyUpdate() // Notify about update
-
-  return newStep
-}
-
-export function deleteScriptStep(id: string) {
-  if (typeof window === "undefined") return
-
-  const steps = getScriptSteps().filter((s) => s.id !== id)
-  debouncedSave(STORAGE_KEYS.SCRIPT_STEPS, steps)
-  notifyUpdate() // Notify about update
-}
 
 // Tabulations
 export function getTabulations(): Tabulation[] {
