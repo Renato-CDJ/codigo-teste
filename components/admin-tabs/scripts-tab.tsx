@@ -16,7 +16,7 @@ import {
   deleteScriptStep,
   importScriptFromJson,
   getProducts,
-} from "@/lib/store"
+} from "@/lib/firebase-store"
 import type { ScriptStep, ScriptButton, Product } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { AdminScriptPreview } from "@/components/admin-script-preview"
@@ -25,8 +25,8 @@ import { validateScriptJson } from "@/lib/scripts-loader"
 import { getAutoLoadScripts } from "@/lib/auto-load-scripts"
 
 export function ScriptsTab() {
-  const [steps, setSteps] = useState<ScriptStep[]>(getScriptSteps())
-  const [products, setProducts] = useState<Product[]>(getProducts())
+  const [steps, setSteps] = useState<ScriptStep[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [editingStep, setEditingStep] = useState<ScriptStep | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [previewStep, setPreviewStep] = useState<ScriptStep | null>(null)
@@ -53,9 +53,10 @@ export function ScriptsTab() {
     }
   }
 
-  const refreshSteps = () => {
-    setSteps(getScriptSteps())
-    setProducts(getProducts())
+  const refreshSteps = async () => {
+    const [stepsData, productsData] = await Promise.all([getScriptSteps(), getProducts()])
+    setSteps(stepsData)
+    setProducts(productsData)
   }
 
   const isScriptImported = (scriptName: string): boolean => {
@@ -63,12 +64,12 @@ export function ScriptsTab() {
     return products.some((p) => p.id === productId)
   }
 
-  const handleImportAvailableScript = (scriptData: any, scriptName: string) => {
+  const handleImportAvailableScript = async (scriptData: any, scriptName: string) => {
     try {
-      const result = importScriptFromJson(scriptData)
+      const result = await importScriptFromJson(scriptData)
 
       if (result.stepCount > 0) {
-        refreshSteps()
+        await refreshSteps()
         toast({
           title: "Script importado com sucesso!",
           description: `${result.productCount} produto(s) e ${result.stepCount} tela(s) foram importados de ${scriptName}.`,
@@ -142,10 +143,10 @@ export function ScriptsTab() {
           return
         }
 
-        const result = importScriptFromJson(data)
+        const result = await importScriptFromJson(data)
 
         if (result.stepCount > 0) {
-          refreshSteps()
+          await refreshSteps()
           setEditingStep(null)
           setIsCreating(false)
           setPreviewStep(null)
@@ -184,17 +185,23 @@ export function ScriptsTab() {
       let totalProducts = 0
       let totalSteps = 0
 
-      scripts.forEach((scriptData) => {
-        try {
-          const result = importScriptFromJson(scriptData)
-          totalProducts += result.productCount
-          totalSteps += result.stepCount
-        } catch (error) {
-          console.error("[v0] Error loading individual script:", error)
-        }
+      const results = await Promise.all(
+        scripts.map(async (scriptData) => {
+          try {
+            return await importScriptFromJson(scriptData)
+          } catch (error) {
+            console.error("Error loading individual script:", error)
+            return { productCount: 0, stepCount: 0 }
+          }
+        })
+      )
+
+      results.forEach((result) => {
+        totalProducts += result.productCount
+        totalSteps += result.stepCount
       })
 
-      refreshSteps()
+      await refreshSteps()
       toast({
         title: "Scripts carregados com sucesso!",
         description: `${totalProducts} produto(s) e ${totalSteps} tela(s) foram importados da pasta data/scripts.`,
@@ -257,11 +264,10 @@ export function ScriptsTab() {
         })
       }
 
-      refreshSteps()
+      await refreshSteps()
       setEditingStep(null)
       setIsCreating(false)
     } catch (error) {
-      console.error("Error saving script:", error)
       toast({
         title: "Erro ao salvar",
         description: "Ocorreu um erro ao salvar o roteiro.",
@@ -274,13 +280,12 @@ export function ScriptsTab() {
     if (confirm("Tem certeza que deseja excluir este roteiro?")) {
       try {
         await deleteScriptStep(id)
-        refreshSteps()
+        await refreshSteps()
         toast({
           title: "Roteiro excluído",
           description: "O roteiro foi removido com sucesso.",
         })
       } catch (error) {
-        console.error("Error deleting script:", error)
         toast({
           title: "Erro ao excluir",
           description: "Ocorreu um erro ao excluir o roteiro.",

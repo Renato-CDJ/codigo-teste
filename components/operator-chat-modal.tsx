@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Send, Reply, X } from 'lucide-react'
+import { Send, Reply, X } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { getChatMessagesForUser, sendChatMessage, markChatMessageAsRead, getChatSettings } from "@/lib/store"
 import type { ChatMessage } from "@/lib/types"
@@ -75,6 +75,7 @@ export const OperatorChatModal = memo(function OperatorChatModal({ open, onOpenC
     sendChatMessage(user.id, user.fullName, user.role, newMessage.trim(), undefined, undefined, replyToData)
     setNewMessage("")
     setReplyingTo(null)
+    loadMessages()
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

@@ -1,7 +1,6 @@
 // Client-side state management using localStorage for prototype
 // This will be replaced with real database integration later
 
-import { createClient } from "@/lib/supabase/client"
 import type {
   User,
   ScriptStep,
@@ -18,88 +17,13 @@ import type {
   Quiz,
   QuizAttempt,
   AdminPermissions,
-  ChatMessage,
-  ChatSettings,
-  Presentation,
-  PresentationProgress,
+  ChatMessage, // Imported for chat
+  ChatSettings, // Imported for chat
+  Presentation, // Imported for presentations
+  PresentationProgress, // Imported for presentation progress
 } from "./types"
 
-// Initialize Supabase client
-const supabase = createClient()
-
-// Cache for data
-let cachedUsers: User[] = []
-let cachedScriptSteps: ScriptStep[] = []
-let cachedTabulations: Tabulation[] = []
-let cachedSituations: ServiceSituation[] = []
-let cachedChannels: Channel[] = []
-let cachedProducts: Product[] = []
-let cachedMessages: Message[] = []
-let cachedQuizzes: Quiz[] = []
-let cachedChatMessages: ChatMessage[] = []
-let cachedPresentations: Presentation[] = []
-
-// Initialize real-time subscriptions
-export function initializeRealtimeSubscriptions() {
-  if (typeof window === "undefined") return
-
-  // Subscribe to changes in all tables
-  const channel = supabase
-    .channel("db-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "users" }, (payload) => {
-      handleUserChange(payload)
-    })
-    .on("postgres_changes", { event: "*", schema: "public", table: "script_steps" }, (payload) => {
-      handleScriptStepChange(payload)
-    })
-    .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, (payload) => {
-      handleChatMessageChange(payload)
-    })
-    // Add more subscriptions as needed
-    .subscribe()
-
-  return () => {
-    supabase.removeChannel(channel)
-  }
-}
-
-function handleUserChange(payload: any) {
-  // Update local cache and notify listeners
-  if (payload.eventType === "INSERT") {
-    cachedUsers.push(payload.new)
-  } else if (payload.eventType === "UPDATE") {
-    const index = cachedUsers.findIndex((u) => u.id === payload.new.id)
-    if (index !== -1) cachedUsers[index] = payload.new
-  } else if (payload.eventType === "DELETE") {
-    cachedUsers = cachedUsers.filter((u) => u.id !== payload.old.id)
-  }
-  notifyUpdate()
-}
-
-function handleScriptStepChange(payload: any) {
-  if (payload.eventType === "INSERT") {
-    cachedScriptSteps.push(payload.new)
-  } else if (payload.eventType === "UPDATE") {
-    const index = cachedScriptSteps.findIndex((s) => s.id === payload.new.id)
-    if (index !== -1) cachedScriptSteps[index] = payload.new
-  } else if (payload.eventType === "DELETE") {
-    cachedScriptSteps = cachedScriptSteps.filter((s) => s.id !== payload.old.id)
-  }
-  clearCaches()
-  notifyUpdate()
-}
-
-function handleChatMessageChange(payload: any) {
-  if (payload.eventType === "INSERT") {
-    cachedChatMessages.push(payload.new)
-  } else if (payload.eventType === "UPDATE") {
-    const index = cachedChatMessages.findIndex((m) => m.id === payload.new.id)
-    if (index !== -1) cachedChatMessages[index] = payload.new
-  } else if (payload.eventType === "DELETE") {
-    cachedChatMessages = cachedChatMessages.filter((m) => m.id !== payload.old.id)
-  }
-  notifyUpdate()
-}
+import * as firebaseStore from "./firebase-store"
 
 const saveQueue: Map<string, any> = new Map()
 let saveTimeout: NodeJS.Timeout | null = null
@@ -317,7 +241,7 @@ const MOCK_TABULATIONS: Tabulation[] = [
   {
     id: "tab-10",
     name: "RECUSA AÇÃO/CAMPANHA",
-    description: "Cliente não aceita a ação/ campanha ofertada.",
+    description: "Cliente não aceita a ação/campanha ofertada.",
     color: "#ef4444",
     createdAt: new Date(),
   },
@@ -623,249 +547,233 @@ const STORAGE_KEYS = {
   PRESENTATION_PROGRESS: "callcenter_presentation_progress",
 }
 
-export async function initializeMockData() {
+// Initialize mock data
+export function initializeMockData() {
   if (typeof window === "undefined") return
 
-  try {
-    // Fetch initial data
-    const { data: users } = await supabase.from("users").select("*")
-    if (users) cachedUsers = users as User[]
+  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(MOCK_USERS))
+  console.log(
+    "[v0] Users initialized:",
+    MOCK_USERS.map((u) => u.username),
+  )
 
-    const { data: steps } = await supabase.from("script_steps").select("*")
-    if (steps) cachedScriptSteps = steps as ScriptStep[]
-
-    const { data: tabulations } = await supabase.from("tabulations").select("*")
-    if (tabulations) cachedTabulations = tabulations as Tabulation[]
-
-    const { data: situations } = await supabase.from("service_situations").select("*")
-    if (situations) cachedSituations = situations as ServiceSituation[]
-
-    const { data: channels } = await supabase.from("channels").select("*")
-    if (channels) cachedChannels = channels as Channel[]
-
-    const { data: products } = await supabase.from("products").select("*")
-    if (products) cachedProducts = products as Product[]
-
-    const { data: messages } = await supabase.from("messages").select("*")
-    if (messages) cachedMessages = messages as Message[]
-
-    const { data: quizzes } = await supabase.from("quizzes").select("*")
-    if (quizzes) cachedQuizzes = quizzes as Quiz[]
-
-    const { data: chatMessages } = await supabase.from("chat_messages").select("*")
-    if (chatMessages) cachedChatMessages = chatMessages as ChatMessage[]
-
-    const { data: presentations } = await supabase.from("presentations").select("*")
-    if (presentations) cachedPresentations = presentations as Presentation[]
-
-    // Initialize subscriptions
-    initializeRealtimeSubscriptions()
-    
-    console.log("[v0] Data initialized from Supabase")
-  } catch (error) {
-    console.error("[v0] Error initializing data:", error)
+  if (!localStorage.getItem(STORAGE_KEYS.SCRIPT_STEPS)) {
+    localStorage.setItem(STORAGE_KEYS.SCRIPT_STEPS, JSON.stringify([]))
   }
+
+  localStorage.setItem(STORAGE_KEYS.TABULATIONS, JSON.stringify(MOCK_TABULATIONS))
+
+  localStorage.setItem(STORAGE_KEYS.SITUATIONS, JSON.stringify(MOCK_SITUATIONS))
+
+  if (!localStorage.getItem(STORAGE_KEYS.CHANNELS)) {
+    localStorage.setItem(STORAGE_KEYS.CHANNELS, JSON.stringify(MOCK_CHANNELS))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.NOTES)) {
+    localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify([]))
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.SESSIONS)) {
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify([]))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify([]))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.ATTENDANCE_TYPES)) {
+    const defaultAttendanceTypes: AttendanceTypeOption[] = [
+      {
+        id: "att-ativo",
+        value: "ativo",
+        label: "Ativo",
+        createdAt: new Date(),
+      },
+      {
+        id: "att-receptivo",
+        value: "receptivo",
+        label: "Receptivo",
+        createdAt: new Date(),
+      },
+    ]
+    localStorage.setItem(STORAGE_KEYS.ATTENDANCE_TYPES, JSON.stringify(defaultAttendanceTypes))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.PERSON_TYPES)) {
+    const defaultPersonTypes: PersonTypeOption[] = [
+      {
+        id: "per-fisica",
+        value: "fisica",
+        label: "Física",
+        createdAt: new Date(),
+      },
+      {
+        id: "per-juridica",
+        value: "juridica",
+        label: "Jurídica",
+        createdAt: new Date(),
+      },
+    ]
+    localStorage.setItem(STORAGE_KEYS.PERSON_TYPES, JSON.stringify(defaultPersonTypes))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.LAST_UPDATE)) {
+    localStorage.setItem(STORAGE_KEYS.LAST_UPDATE, Date.now().toString())
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.CHAT_SETTINGS)) {
+    const defaultChatSettings: ChatSettings = {
+      isEnabled: true,
+      updatedAt: new Date(),
+      updatedBy: "system",
+    }
+    localStorage.setItem(STORAGE_KEYS.CHAT_SETTINGS, JSON.stringify(defaultChatSettings))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.CHAT_MESSAGES)) {
+    localStorage.setItem(STORAGE_KEYS.CHAT_MESSAGES, JSON.stringify([]))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.PRESENTATIONS)) {
+    localStorage.setItem(STORAGE_KEYS.PRESENTATIONS, JSON.stringify([]))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.PRESENTATION_PROGRESS)) {
+    localStorage.setItem(STORAGE_KEYS.PRESENTATION_PROGRESS, JSON.stringify([]))
+  }
+
+  if (!localStorage.getItem(STORAGE_KEYS.QUIZ_ATTEMPTS)) {
+    const mockQuizAttempts = [
+      // Current month attempts
+      { id: "att-1", quizId: "quiz-1", operatorId: "2", operatorName: "Monitoria 1", selectedAnswer: "opt-1", isCorrect: true, attemptedAt: new Date() },
+      { id: "att-2", quizId: "quiz-1", operatorId: "3", operatorName: "Monitoria 2", selectedAnswer: "opt-2", isCorrect: false, attemptedAt: new Date() },
+      { id: "att-3", quizId: "quiz-2", operatorId: "2", operatorName: "Monitoria 1", selectedAnswer: "opt-1", isCorrect: true, attemptedAt: new Date() },
+      { id: "att-4", quizId: "quiz-2", operatorId: "4", operatorName: "Monitoria 3", selectedAnswer: "opt-1", isCorrect: true, attemptedAt: new Date() },
+      { id: "att-5", quizId: "quiz-1", operatorId: "4", operatorName: "Monitoria 3", selectedAnswer: "opt-1", isCorrect: true, attemptedAt: new Date() },
+      { id: "att-6", quizId: "quiz-2", operatorId: "3", operatorName: "Monitoria 2", selectedAnswer: "opt-1", isCorrect: true, attemptedAt: new Date() },
+      { id: "att-7", quizId: "quiz-1", operatorId: "5", operatorName: "Monitoria 4", selectedAnswer: "opt-2", isCorrect: false, attemptedAt: new Date() },
+    ]
+    localStorage.setItem(STORAGE_KEYS.QUIZ_ATTEMPTS, JSON.stringify(mockQuizAttempts))
+  }
+
+  cleanupOldSessions()
+
+  loadScriptsFromDataFolder()
 }
 
-export async function authenticateUser(username: string, password: string): Promise<User | null> {
+export async function initializeMockDataAsync() {
+  if (typeof window === "undefined") return
+
+  // Try to load from Firebase first if available
   try {
-    // For this implementation, we'll check against our users table since we're migrating
-    // In a full Supabase Auth implementation, we would use supabase.auth.signInWithPassword
-    
-    const { data: user } = await supabase
-      .from("users")
-      .select("*")
-      .eq("username", username)
-      .single()
+    console.log("[v0] Checking Firebase for existing data...")
 
-    if (!user) return null
+    // Check if we have Firebase data by trying to fetch products
+    const firebaseProducts = await firebaseStore.getProducts()
 
-    // Simple password check for migration (should be replaced with proper auth)
+    if (firebaseProducts && firebaseProducts.length > 0) {
+      console.log("[v0] Found data in Firebase, skipping localStorage initialization")
+      return // Data already in Firebase
+    }
+  } catch (error) {
+    console.log("[v0] Firebase check failed, using localStorage:", error)
+  }
+
+  // Fallback to localStorage initialization
+  initializeMockData()
+}
+
+// User authentication
+export function authenticateUser(username: string, password: string): User | null {
+  if (typeof window === "undefined") return null
+
+  const users: User[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
+
+  const user = users.find((u) => u.username.toLowerCase() === username.toLowerCase())
+
+  if (user) {
     if (user.role === "admin") {
       const validPasswords = ["rcp@$", "#qualidade@$"]
-      if (!validPasswords.includes(password)) return null
+
+      if (!validPasswords.includes(password)) {
+        return null
+      }
+
+      const session: LoginSession = {
+        id: `session-${Date.now()}`,
+        loginAt: new Date(),
+      }
+
+      user.lastLoginAt = new Date()
+      user.isOnline = true
+      user.loginSessions = user.loginSessions || []
+      user.loginSessions.push(session)
+
+      // Update user in storage
+      const updatedUsers = users.map((u) => (u.id === user.id ? user : u))
+      debouncedSave(STORAGE_KEYS.USERS, updatedUsers)
+
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user))
+      return user
     }
 
-    // Update user status
-    await supabase
-      .from("users")
-      .update({ 
-        is_online: true, 
-        last_login_at: new Date().toISOString() 
-      })
-      .eq("id", user.id)
-
-    // Create login session
-    await supabase.from("login_sessions").insert({
-      user_id: user.id,
-      login_at: new Date().toISOString()
-    })
-
-    // Update local cache
-    const userIndex = cachedUsers.findIndex(u => u.id === user.id);
-    if (userIndex !== -1) {
-      cachedUsers[userIndex] = {
-        ...user,
-        last_login_at: user.last_login_at ? new Date(user.last_login_at) : undefined,
-        created_at: user.created_at ? new Date(user.created_at) : undefined,
-        login_sessions: user.login_sessions || [] // Assuming login_sessions might be fetched separately or populated later
-      };
-    } else {
-      cachedUsers.push({
-        ...user,
-        last_login_at: user.last_login_at ? new Date(user.last_login_at) : undefined,
-        created_at: user.created_at ? new Date(user.created_at) : undefined,
-        login_sessions: user.login_sessions || []
-      });
+    const session: LoginSession = {
+      id: `session-${Date.now()}`,
+      loginAt: new Date(),
     }
-    
-    // Also update localStorage for immediate access in components
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify({
-      ...user,
-      last_login_at: user.last_login_at ? new Date(user.last_login_at) : undefined,
-      created_at: user.created_at ? new Date(user.created_at) : undefined,
-      login_sessions: user.login_sessions || []
-    }));
 
-    notifyUpdate(); // Notify about the user update
+    user.lastLoginAt = new Date()
+    user.isOnline = true
+    user.loginSessions = user.loginSessions || []
+    user.loginSessions.push(session)
 
-    return user;
-  } catch (error) {
-    console.error("[v0] Auth error:", error)
-    return null
+    // Update user in storage
+    const updatedUsers = users.map((u) => (u.id === user.id ? user : u))
+    debouncedSave(STORAGE_KEYS.USERS, updatedUsers)
+
+    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user))
+    return user
   }
+
+  return null
 }
 
 export function getCurrentUser(): User | null {
   if (typeof window === "undefined") return null
-  // For synchronous access in components, we still use localStorage as a cache
-  const userStr = localStorage.getItem(STORAGE_KEYS.CURRENT_USER)
-  if (!userStr) return null;
 
-  const user = JSON.parse(userStr);
-  // Convert dates back to Date objects if they exist
-  if (user.createdAt) user.createdAt = new Date(user.createdAt);
-  if (user.updatedAt) user.updatedAt = new Date(user.updatedAt);
-  if (user.lastLoginAt) user.lastLoginAt = new Date(user.lastLoginAt);
-  if (user.loginSessions) {
-    user.loginSessions = user.loginSessions.map((session: any) => ({
-      ...session,
-      loginAt: new Date(session.loginAt),
-      logoutAt: session.logoutAt ? new Date(session.logoutAt) : undefined,
-    }));
-  }
-  return user;
+  const userStr = localStorage.getItem(STORAGE_KEYS.CURRENT_USER)
+  return userStr ? JSON.parse(userStr) : null
 }
 
-export async function logout() {
+export function logout() {
+  if (typeof window === "undefined") return
+
   const currentUser = getCurrentUser()
-  if (currentUser) {
-    try {
-      await supabase
-        .from("users")
-        .update({ is_online: false })
-        .eq("id", currentUser.id)
-        
-      // Close session
-      const { data: sessions } = await supabase
-        .from("login_sessions")
-        .select("*")
-        .eq("user_id", currentUser.id)
-        .is("logout_at", null)
-        .order("login_at", { ascending: false })
-        .limit(1)
-        
-      if (sessions && sessions.length > 0) {
-        const session = sessions[0]
-        const logoutTime = new Date()
-        const duration = logoutTime.getTime() - new Date(session.login_at).getTime()
-        
-        await supabase
-          .from("login_sessions")
-          .update({ 
-            logout_at: logoutTime.toISOString(),
-            duration 
-          })
-          .eq("id", session.id)
+  if (currentUser && currentUser.loginSessions && currentUser.loginSessions.length > 0) {
+    const users: User[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
+    const user = users.find((u) => u.id === currentUser.id)
+
+    if (user && user.loginSessions) {
+      const lastSession = user.loginSessions[user.loginSessions.length - 1]
+      if (!lastSession.logoutAt) {
+        lastSession.logoutAt = new Date()
+        lastSession.duration = lastSession.logoutAt.getTime() - new Date(lastSession.loginAt).getTime()
+        user.isOnline = false
+
+        // Update user in storage
+        const updatedUsers = users.map((u) => (u.id === user.id ? user : u))
+        debouncedSave(STORAGE_KEYS.USERS, updatedUsers)
+        notifyUpdate()
       }
-    } catch (error) {
-      console.error("[v0] Logout error:", error)
     }
   }
-  
-  localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
-  // Update cache and notify
-  const userIndex = cachedUsers.findIndex(u => u.id === currentUser?.id);
-  if (userIndex !== -1) {
-    cachedUsers[userIndex].isOnline = false;
-    notifyUpdate();
-  }
 
-  if (typeof window !== "undefined") {
-    window.location.href = "/login"
-  }
+  localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
 }
 
 // Script steps
 export function getScriptSteps(): ScriptStep[] {
   if (typeof window === "undefined") return []
-  return cachedScriptSteps
-}
-
-export async function createScriptStep(step: Omit<ScriptStep, "id" | "createdAt" | "updatedAt">): Promise<ScriptStep> {
-  const newStep = {
-    ...step,
-    id: `step-${Date.now()}`, // Temporary ID, Supabase will generate UUID if we change schema
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-
-  const { data, error } = await supabase
-    .from("script_steps")
-    .insert(newStep)
-    .select()
-    .single()
-
-  if (error) throw error
-  // Add to cache
-  cachedScriptSteps.push({
-    ...data,
-    createdAt: new Date(data.created_at),
-    updatedAt: new Date(data.updated_at),
-  })
-  notifyUpdate()
-  return {
-    ...data,
-    createdAt: new Date(data.created_at),
-    updatedAt: new Date(data.updated_at),
-  }
-}
-
-export async function updateScriptStep(step: ScriptStep) {
-  const { error } = await supabase
-    .from("script_steps")
-    .update({ ...step, updated_at: new Date().toISOString() })
-    .eq("id", step.id)
-
-  if (error) throw error
-  // Update cache
-  const index = cachedScriptSteps.findIndex((s) => s.id === step.id)
-  if (index !== -1) {
-    cachedScriptSteps[index] = { ...step, updatedAt: new Date(step.updatedAt || Date.now()) }
-    notifyUpdate()
-  }
-}
-
-export async function deleteScriptStep(id: string) {
-  const { error } = await supabase
-    .from("script_steps")
-    .delete()
-    .eq("id", id)
-
-  if (error) throw error
-  // Update cache
-  cachedScriptSteps = cachedScriptSteps.filter((s) => s.id !== id)
-  notifyUpdate()
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.SCRIPT_STEPS) || "[]")
 }
 
 export function getScriptStepById(id: string, productId?: string): ScriptStep | null {
@@ -914,23 +822,62 @@ export function getProductById(id: string): Product | null {
   return product
 }
 
+export function updateScriptStep(step: ScriptStep) {
+  if (typeof window === "undefined") return
+
+  const steps = getScriptSteps()
+  const index = steps.findIndex((s) => s.id === step.id)
+
+  if (index !== -1) {
+    steps[index] = { ...step, updatedAt: new Date() }
+    debouncedSave(STORAGE_KEYS.SCRIPT_STEPS, steps)
+    clearCaches() // Clear cache
+    notifyUpdate()
+  }
+}
+
+export function createScriptStep(step: Omit<ScriptStep, "id" | "createdAt" | "updatedAt">): ScriptStep {
+  if (typeof window === "undefined") return { ...step, id: "", createdAt: new Date(), updatedAt: new Date() }
+
+  const newStep: ScriptStep = {
+    ...step,
+    id: `step-${Date.now()}`,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+
+  const steps = getScriptSteps()
+  steps.push(newStep)
+  debouncedSave(STORAGE_KEYS.SCRIPT_STEPS, steps)
+  notifyUpdate() // Notify about update
+
+  return newStep
+}
+
+export function deleteScriptStep(id: string) {
+  if (typeof window === "undefined") return
+
+  const steps = getScriptSteps().filter((s) => s.id !== id)
+  debouncedSave(STORAGE_KEYS.SCRIPT_STEPS, steps)
+  notifyUpdate() // Notify about update
+}
 
 // Tabulations
 export function getTabulations(): Tabulation[] {
   if (typeof window === "undefined") return []
-  return cachedTabulations
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.TABULATIONS) || "[]")
 }
 
 // Situations
 export function getSituations(): ServiceSituation[] {
   if (typeof window === "undefined") return []
-  return cachedSituations
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.SITUATIONS) || "[]")
 }
 
 // Channels
 export function getChannels(): Channel[] {
   if (typeof window === "undefined") return []
-  return cachedChannels
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.CHANNELS) || "[]")
 }
 
 // Notes
@@ -997,7 +944,7 @@ export function updateCallSession(session: CallSession) {
 // Products
 export function getProducts(): Product[] {
   if (typeof window === "undefined") return []
-  return cachedProducts
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS) || "[]")
 }
 
 export function createProduct(product: Omit<Product, "id" | "createdAt">): Product {
@@ -1042,7 +989,7 @@ export function deleteProduct(id: string) {
 // Additional user management functions
 export function getAllUsers(): User[] {
   if (typeof window === "undefined") return []
-  return cachedUsers
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]")
 }
 
 export function updateUser(user: User) {
@@ -1141,8 +1088,6 @@ function notifyUpdate() {
   }
 
   updateTimeout = setTimeout(() => {
-    // For Supabase, we rely on real-time subscriptions for updates.
-    // This localStorage update is more for local cache invalidation if needed.
     localStorage.setItem(STORAGE_KEYS.LAST_UPDATE, Date.now().toString())
     window.dispatchEvent(new CustomEvent("store-updated"))
   }, 300) // Increased from 100ms to reduce event frequency
@@ -1375,7 +1320,7 @@ export function deletePersonType(id: string) {
 // Messages management functions
 export function getMessages(): Message[] {
   if (typeof window === "undefined") return []
-  return cachedMessages
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.MESSAGES) || "[]")
 }
 
 export function getActiveMessages(): Message[] {
@@ -1474,7 +1419,7 @@ export function getHistoricalMessagesForOperator(operatorId: string): Message[] 
 // Quizzes management functions
 export function getQuizzes(): Quiz[] {
   if (typeof window === "undefined") return []
-  return cachedQuizzes
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.QUIZZES) || "[]")
 }
 
 export function getActiveQuizzes(): Quiz[] {
@@ -1799,7 +1744,7 @@ export function cleanupOldSessions() {
 
 export function getAllChatMessages(): ChatMessage[] {
   if (typeof window === "undefined") return []
-  return cachedChatMessages
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.CHAT_MESSAGES) || "[]")
 }
 
 export function getChatSettings(): ChatSettings {
@@ -1907,7 +1852,7 @@ export function deleteChatMessage(messageId: string) {
 
 export function getPresentations(): Presentation[] {
   if (typeof window === "undefined") return []
-  return cachedPresentations
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.PRESENTATIONS) || "[]")
 }
 
 export function getActivePresentations(): Presentation[] {
@@ -2032,4 +1977,46 @@ export function exportPresentationReport(presentationId: string): string {
   })
 
   return csvContent
+}
+
+export async function syncDataToFirebaseIfNeeded() {
+  if (typeof window === "undefined") return
+
+  try {
+    const lastUpdate = getLastUpdate()
+    const hasLocalData = localStorage.getItem(STORAGE_KEYS.PRODUCTS)
+
+    if (hasLocalData && lastUpdate) {
+      console.log("[v0] Syncing local data to Firebase...")
+
+      // Get current data from localStorage
+      const users = getAllUsers()
+      const products = getProducts()
+      const steps = getScriptSteps()
+      const tabulations = getTabulations()
+      const situations = getSituations()
+      const channels = getChannels()
+      const messages = getMessages()
+
+      // Check if Firebase is empty or needs update
+      const firebaseProducts = await firebaseStore.getProducts()
+
+      if (firebaseProducts.length === 0) {
+        console.log("[v0] Firebase is empty, syncing data...")
+
+        // Sync products
+        for (const product of products) {
+          try {
+            await firebaseStore.updateProduct(product)
+          } catch {
+            await firebaseStore.createProduct(product)
+          }
+        }
+
+        console.log("[v0] Data synced to Firebase successfully")
+      }
+    }
+  } catch (error) {
+    console.error("[v0] Sync error:", error)
+  }
 }

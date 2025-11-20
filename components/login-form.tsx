@@ -5,9 +5,9 @@ import { useState, useCallback, useMemo, memo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { authenticateUser } from "@/lib/store"
+import { authenticateWithFirebase } from "@/lib/firebase-auth"
 import { useAuth } from "@/lib/auth-context"
-import { AlertCircle, User, Lock, Sun, Moon } from "lucide-react"
+import { AlertCircle, User, Lock, Sun, Moon } from 'lucide-react'
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTheme } from "next-themes"
 
@@ -20,15 +20,13 @@ export const LoginForm = memo(function LoginForm() {
   const { theme, setTheme } = useTheme()
   const { refreshUser } = useAuth()
 
-  const validUsers = useMemo(() => ["admin", "monitoria1", "monitoria2", "monitoria3", "monitoria4"], [])
-
   const handleUsernameChange = useCallback(
     (value: string) => {
       setUsername(value)
-      setShowPasswordField(validUsers.includes(value.toLowerCase()))
+      setShowPasswordField(value.toLowerCase() === "admin" || value.includes("@"))
       setError("")
     },
-    [validUsers],
+    [],
   )
 
   const handleSubmit = useCallback(
@@ -37,23 +35,32 @@ export const LoginForm = memo(function LoginForm() {
       setError("")
       setIsLoading(true)
 
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      const user = authenticateUser(username, password)
-
-      if (user) {
-        refreshUser()
-      } else {
-        if (showPasswordField) {
-          setError("Senha incorreta")
-        } else {
-          setError("Usuário não encontrado")
+      try {
+        console.log("[v0] Submitting login form")
+        
+        let loginPassword = password
+        if (!password && !username.includes("@") && username.toLowerCase() !== "admin") {
+          console.log("[v0] No password provided for username, using default")
+          loginPassword = "123456"
         }
-      }
 
-      setIsLoading(false)
+        const user = await authenticateWithFirebase(username, loginPassword)
+
+        if (user) {
+          console.log("[v0] Login successful")
+          refreshUser()
+        } else {
+          console.log("[v0] Login failed - invalid credentials")
+          setError("Usuário ou senha incorretos")
+        }
+      } catch (error: any) {
+        console.error("[v0] Login error:", error)
+        setError("Erro ao fazer login. Tente novamente.")
+      } finally {
+        setIsLoading(false)
+      }
     },
-    [username, password, showPasswordField, refreshUser],
+    [username, password, refreshUser],
   )
 
   const toggleTheme = useCallback(() => {
@@ -97,7 +104,7 @@ export const LoginForm = memo(function LoginForm() {
               <Input
                 id="username"
                 type="text"
-                placeholder="Digite seu usuário ou e-mail"
+                placeholder="Usuário"
                 value={username}
                 onChange={(e) => handleUsernameChange(e.target.value)}
                 required
@@ -108,7 +115,7 @@ export const LoginForm = memo(function LoginForm() {
             </div>
           </div>
 
-          {showPasswordField && (
+          {(username.includes("@") || username.toLowerCase() === "admin" || showPasswordField) && (
             <div className="space-y-2 animate-fade-in">
               <label htmlFor="password" className="sr-only">
                 Senha
@@ -121,7 +128,7 @@ export const LoginForm = memo(function LoginForm() {
                   placeholder="Digite sua senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
+                  required={username.includes("@") || username.toLowerCase() === "admin"}
                   autoComplete="current-password"
                   disabled={isLoading}
                   className="h-14 pl-12 text-base bg-white dark:bg-zinc-800/50 border-2 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"

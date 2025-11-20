@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Plus, Edit, Trash2, Save, X, ExternalLink, Copy } from 'lucide-react'
+import { Plus, Edit, Trash2, Save, X, ExternalLink, Copy } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { getChannels } from "@/lib/store"
 import type { Channel } from "@/lib/types"
@@ -47,20 +47,25 @@ export function ChannelsTab() {
     if (!editingItem) return
 
     if (isCreating) {
-      console.log("Creating channel:", editingItem)
-      
+      const newChannels = [...channels, editingItem]
+      localStorage.setItem("callcenter_channels", JSON.stringify(newChannels))
+      setChannels(newChannels)
       toast({
         title: "Canal criado",
         description: "O novo canal foi criado com sucesso.",
       })
     } else {
-      console.log("Updating channel:", editingItem)
-      
+      const updatedChannels = channels.map((c) => (c.id === editingItem.id ? editingItem : c))
+      localStorage.setItem("callcenter_channels", JSON.stringify(updatedChannels))
+      setChannels(updatedChannels)
       toast({
         title: "Canal atualizado",
         description: "As alterações foram salvas com sucesso.",
       })
     }
+
+    localStorage.setItem("callcenter_last_update", Date.now().toString())
+    window.dispatchEvent(new CustomEvent("store-updated"))
 
     setEditingItem(null)
     setIsCreating(false)
@@ -68,7 +73,12 @@ export function ChannelsTab() {
 
   const handleDelete = (id: string) => {
     if (confirm("Tem certeza que deseja excluir este canal?")) {
-      console.log("Deleting channel:", id)
+      const updatedChannels = channels.filter((c) => c.id !== id)
+      localStorage.setItem("callcenter_channels", JSON.stringify(updatedChannels))
+      setChannels(updatedChannels)
+
+      localStorage.setItem("callcenter_last_update", Date.now().toString())
+      window.dispatchEvent(new CustomEvent("store-updated"))
 
       toast({
         title: "Canal excluído",

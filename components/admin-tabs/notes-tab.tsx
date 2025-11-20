@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Save, Clock } from 'lucide-react'
+import { Save, Clock } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { getNotes, saveNote } from "@/lib/store"
 import type { Note } from "@/lib/types"
@@ -32,6 +32,9 @@ export function NotesTab() {
     if (!user) return
 
     saveNote(user.id, content)
+    setLastSaved(new Date())
+    setNotes(getNotes(user.id))
+
     toast({
       title: "Nota salva",
       description: "Suas anotações foram salvas com sucesso.",
@@ -44,24 +47,10 @@ export function NotesTab() {
 
     const autoSaveInterval = setInterval(() => {
       saveNote(user.id, content)
+      setLastSaved(new Date())
     }, 30000)
-    
-    const handleStoreUpdate = () => {
-      if (user) {
-        const userNotes = getNotes(user.id)
-        setNotes(userNotes)
-        if (userNotes.length > 0) {
-          setLastSaved(userNotes[userNotes.length - 1].updatedAt)
-        }
-      }
-    }
-    
-    window.addEventListener("store-updated", handleStoreUpdate)
 
-    return () => {
-      clearInterval(autoSaveInterval)
-      window.removeEventListener("store-updated", handleStoreUpdate)
-    }
+    return () => clearInterval(autoSaveInterval)
   }, [content, user])
 
   return (

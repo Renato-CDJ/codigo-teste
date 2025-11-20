@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, FileText, CheckCircle, Clock } from 'lucide-react'
+import { Users, FileText, CheckCircle, Clock } from "lucide-react"
 import { getOnlineOperatorsCount, getProducts } from "@/lib/store"
 
 export function DashboardTab() {
@@ -17,6 +17,9 @@ export function DashboardTab() {
 
     updateCounts()
 
+    // Update every 5 seconds for real-time data
+    const interval = setInterval(updateCounts, 5000)
+
     const handleStoreUpdate = () => {
       updateCounts()
     }
@@ -24,6 +27,7 @@ export function DashboardTab() {
     window.addEventListener("store-updated", handleStoreUpdate)
 
     return () => {
+      clearInterval(interval)
       window.removeEventListener("store-updated", handleStoreUpdate)
     }
   }, [])
