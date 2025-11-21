@@ -2,13 +2,14 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode, useMemo, useCallback } from "react"
 import type { User } from "./types"
-import { onAuthStateChange, logoutFirebase } from "./firebase-auth"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  logout: () => void
-  refreshUser: () => void
+  logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -16,28 +17,68 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const supabase = createClient()
+  const router = useRouter()
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser()
+
+      if (authUser) {
+        // Fetch additional user data from our users table
+        const { data: userData, error } = await supabase.from("users").select("*").eq("id", authUser.id).single()
+
+        if (userData && !error) {
+          setUser({
+            ...userData,
+            createdAt: new Date(userData.created_at),
+            lastLoginAt: userData.last_login_at ? new Date(userData.last_login_at) : undefined,
+          })
+        } else {
+          // If user exists in Auth but not in our table (shouldn't happen with proper setup)
+          setUser(null)
+        }
+      } else {
+        setUser(null)
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error)
+      setUser(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [supabase])
 
   useEffect(() => {
-    console.log("[v0] Setting up Firebase auth listener")
-    const unsubscribe = onAuthStateChange((firebaseUser) => {
-      console.log("[v0] Auth state changed:", firebaseUser)
-      setUser(firebaseUser)
-      setIsLoading(false)
+    fetchUser()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchUser()
+      } else {
+        setUser(null)
+        setIsLoading(false)
+      }
     })
 
-    // Cleanup subscription
-    return () => unsubscribe()
-  }, [])
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [fetchUser, supabase])
 
   const logout = useCallback(async () => {
-    await logoutFirebase()
+    await supabase.auth.signOut()
     setUser(null)
-  }, [])
+    router.push("/")
+  }, [supabase, router])
 
-  const refreshUser = useCallback(() => {
-    // Mas mantemos a função para compatibilidade
-    console.log("[v0] Refresh user called - Firebase handles this automatically")
-  }, [])
+  const refreshUser = useCallback(async () => {
+    await fetchUser()
+  }, [fetchUser])
 
   const contextValue = useMemo(() => ({ user, isLoading, logout, refreshUser }), [user, isLoading, logout, refreshUser])
 

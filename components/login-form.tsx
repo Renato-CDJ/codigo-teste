@@ -5,7 +5,7 @@ import { useState, useCallback, useMemo, memo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { authenticateWithFirebase } from "@/lib/firebase-auth"
+import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import { AlertCircle, User, Lock, Sun, Moon } from 'lucide-react'
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -19,15 +19,13 @@ export const LoginForm = memo(function LoginForm() {
   const [showPasswordField, setShowPasswordField] = useState(false)
   const { theme, setTheme } = useTheme()
   const { refreshUser } = useAuth()
+  const supabase = createClient()
 
-  const handleUsernameChange = useCallback(
-    (value: string) => {
-      setUsername(value)
-      setShowPasswordField(value.toLowerCase() === "admin" || value.includes("@"))
-      setError("")
-    },
-    [],
-  )
+  const handleUsernameChange = useCallback((value: string) => {
+    setUsername(value)
+    setShowPasswordField(value.length > 0)
+    setError("")
+  }, [])
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -36,31 +34,38 @@ export const LoginForm = memo(function LoginForm() {
       setIsLoading(true)
 
       try {
-        console.log("[v0] Submitting login form")
-        
-        let loginPassword = password
-        if (!password && !username.includes("@") && username.toLowerCase() !== "admin") {
-          console.log("[v0] No password provided for username, using default")
-          loginPassword = "123456"
-        }
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email: username, // Assuming username input is email for now, or we need a lookup
+          password: password,
+        })
 
-        const user = await authenticateWithFirebase(username, loginPassword)
-
-        if (user) {
-          console.log("[v0] Login successful")
-          refreshUser()
+        if (signInError) {
+          if (!username.includes("@")) {
+            setError("Por favor, use seu e-mail para fazer login.")
+          } else {
+            setError("Usuário ou senha incorretos")
+          }
         } else {
-          console.log("[v0] Login failed - invalid credentials")
-          setError("Usuário ou senha incorretos")
+          if (data.user) {
+            await supabase
+              .from("users")
+              .update({ 
+                last_login_at: new Date().toISOString(),
+                is_online: true 
+              })
+              .eq("id", data.user.id)
+          }
+          
+          await refreshUser()
         }
-      } catch (error: any) {
-        console.error("[v0] Login error:", error)
-        setError("Erro ao fazer login. Tente novamente.")
+      } catch (err) {
+        console.error("Login error:", err)
+        setError("Ocorreu um erro ao tentar fazer login")
       } finally {
         setIsLoading(false)
       }
     },
-    [username, password, refreshUser],
+    [username, password, refreshUser, supabase],
   )
 
   const toggleTheme = useCallback(() => {
@@ -104,7 +109,7 @@ export const LoginForm = memo(function LoginForm() {
               <Input
                 id="username"
                 type="text"
-                placeholder="Usuário"
+                placeholder="Digite seu usuário ou e-mail"
                 value={username}
                 onChange={(e) => handleUsernameChange(e.target.value)}
                 required
@@ -115,7 +120,7 @@ export const LoginForm = memo(function LoginForm() {
             </div>
           </div>
 
-          {(username.includes("@") || username.toLowerCase() === "admin" || showPasswordField) && (
+          {showPasswordField && (
             <div className="space-y-2 animate-fade-in">
               <label htmlFor="password" className="sr-only">
                 Senha
@@ -128,7 +133,7 @@ export const LoginForm = memo(function LoginForm() {
                   placeholder="Digite sua senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required={username.includes("@") || username.toLowerCase() === "admin"}
+                  required
                   autoComplete="current-password"
                   disabled={isLoading}
                   className="h-14 pl-12 text-base bg-white dark:bg-zinc-800/50 border-2 border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
