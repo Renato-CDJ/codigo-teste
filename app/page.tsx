@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { LoginForm } from "@/components/login-form"
-// import { MouseTrail } from "@/components/mouse-trail"
+import { MouseTrail } from "@/components/mouse-trail"
 
 export default function HomePage() {
   const { user, isLoading } = useAuth()
@@ -44,7 +44,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* <MouseTrail /> */}
+      <MouseTrail />
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-orange-50/20 to-amber-50/20 dark:from-zinc-900 dark:to-zinc-950 p-4 md:p-6 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-400/5 dark:bg-orange-500/5 rounded-full blur-3xl animate-float"></div>

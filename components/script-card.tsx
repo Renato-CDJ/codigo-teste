@@ -393,9 +393,9 @@ export const ScriptCard = memo(function ScriptCard({
           />
         </CardHeader>
 
-        <CardContent className="space-y-6 pb-8 px-4 md:px-8">
+        <CardContent className="space-y-4 md:space-y-6 pb-6 md:pb-8 px-4 md:px-8">
           <div
-            className="bg-gradient-to-br from-orange-50/60 via-amber-50/40 to-orange-50/60 dark:from-gray-600/40 dark:via-gray-600/40 dark:to-gray-600/40 rounded-2xl p-6 md:p-10 leading-relaxed min-h-[280px] md:min-h-[320px] border-2 border-orange-200/60 dark:border-orange-500/40 shadow-inner backdrop-blur-sm"
+            className="bg-gradient-to-br from-orange-50/60 via-amber-50/40 to-orange-50/60 dark:from-gray-600/40 dark:via-gray-600/40 dark:to-gray-600/40 rounded-2xl p-4 md:p-10 leading-relaxed min-h-[200px] md:min-h-[320px] border-2 border-orange-200/60 dark:border-orange-500/40 shadow-inner backdrop-blur-sm"
             style={contentStyles}
           >
             {typeof renderedContent === "string" ? (

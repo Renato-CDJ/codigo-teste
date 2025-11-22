@@ -1,11 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback, memo } from "react"
+import { useState, useCallback, useMemo, memo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { createClient } from "@/lib/supabase/client"
+import { authenticateUser } from "@/lib/store"
 import { useAuth } from "@/lib/auth-context"
 import { AlertCircle, User, Lock, Sun, Moon } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -19,13 +19,17 @@ export const LoginForm = memo(function LoginForm() {
   const [showPasswordField, setShowPasswordField] = useState(false)
   const { theme, setTheme } = useTheme()
   const { refreshUser } = useAuth()
-  const supabase = createClient()
 
-  const handleUsernameChange = useCallback((value: string) => {
-    setUsername(value)
-    setShowPasswordField(value.length > 0)
-    setError("")
-  }, [])
+  const validUsers = useMemo(() => ["admin", "monitoria1", "monitoria2", "monitoria3", "monitoria4"], [])
+
+  const handleUsernameChange = useCallback(
+    (value: string) => {
+      setUsername(value)
+      setShowPasswordField(validUsers.includes(value.toLowerCase()))
+      setError("")
+    },
+    [validUsers],
+  )
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -33,47 +37,23 @@ export const LoginForm = memo(function LoginForm() {
       setError("")
       setIsLoading(true)
 
-      if (!supabase) {
-        setError("Erro de configuração: Cliente Supabase não inicializado.")
-        setIsLoading(false)
-        return
-      }
+      await new Promise((resolve) => setTimeout(resolve, 500))
 
-      try {
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email: username, // Assuming username input is email for now, or we need a lookup
-          password: password,
-        })
+      const user = authenticateUser(username, password)
 
-        if (signInError) {
-          if (signInError.message === "Failed to fetch") {
-            setError("Erro de conexão. Verifique sua internet ou as configurações do projeto.")
-          } else if (!username.includes("@")) {
-            setError("Por favor, use seu e-mail para fazer login.")
-          } else {
-            setError("Usuário ou senha incorretos")
-          }
+      if (user) {
+        refreshUser()
+      } else {
+        if (showPasswordField) {
+          setError("Senha incorreta")
         } else {
-          if (data.user) {
-            await supabase
-              .from("users")
-              .update({
-                last_login_at: new Date().toISOString(),
-                is_online: true,
-              })
-              .eq("id", data.user.id)
-          }
-
-          await refreshUser()
+          setError("Usuário não encontrado")
         }
-      } catch (err) {
-        console.error("Login error:", err)
-        setError("Ocorreu um erro ao tentar fazer login")
-      } finally {
-        setIsLoading(false)
       }
+
+      setIsLoading(false)
     },
-    [username, password, refreshUser, supabase],
+    [username, password, showPasswordField, refreshUser],
   )
 
   const toggleTheme = useCallback(() => {

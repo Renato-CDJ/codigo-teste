@@ -2,14 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode, useMemo, useCallback } from "react"
 import type { User } from "./types"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+import { getCurrentUser, logout as logoutUser, initializeMockData, cleanupOldSessions } from "./store"
 
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  logout: () => Promise<void>
-  refreshUser: () => Promise<void>
+  logout: () => void
+  refreshUser: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -17,77 +16,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = useMemo(() => createClient(), [])
-  const router = useRouter()
-
-  const fetchUser = useCallback(async () => {
-    if (!supabase) {
-      setIsLoading(false)
-      return
-    }
-
-    try {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser()
-
-      if (authUser) {
-        const { data: userData, error } = await supabase.from("users").select("*").eq("id", authUser.id).single()
-
-        if (userData && !error) {
-          setUser({
-            ...userData,
-            createdAt: new Date(userData.created_at),
-            lastLoginAt: userData.last_login_at ? new Date(userData.last_login_at) : undefined,
-          })
-        } else {
-          setUser(null)
-        }
-      } else {
-        setUser(null)
-      }
-    } catch (error) {
-      console.error("Error fetching user:", error)
-      setUser(null)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [supabase])
 
   useEffect(() => {
-    if (!supabase) {
-      setIsLoading(false)
-      return
-    }
+    // Initialize mock data on first load
+    initializeMockData()
 
-    fetchUser()
+    // Check for existing session
+    const currentUser = getCurrentUser()
+    setUser(currentUser)
+    setIsLoading(false)
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        fetchUser()
-      } else {
-        setUser(null)
-        setIsLoading(false)
-      }
-    })
+    cleanupOldSessions()
+  }, [])
 
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [fetchUser, supabase])
-
-  const logout = useCallback(async () => {
-    if (!supabase) return
-    await supabase.auth.signOut()
+  const logout = useCallback(() => {
+    logoutUser()
     setUser(null)
-    router.push("/")
-  }, [supabase, router])
+  }, [])
 
-  const refreshUser = useCallback(async () => {
-    await fetchUser()
-  }, [fetchUser])
+  const refreshUser = useCallback(() => {
+    const currentUser = getCurrentUser()
+    setUser(currentUser)
+  }, [])
 
   const contextValue = useMemo(() => ({ user, isLoading, logout, refreshUser }), [user, isLoading, logout, refreshUser])
 

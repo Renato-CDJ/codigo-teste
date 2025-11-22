@@ -91,7 +91,12 @@ export const ChatTab = memo(function ChatTab() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const filteredMessages = selectedOperatorId
-    ? allMessages.filter((msg) => msg.senderId === selectedOperatorId || msg.recipientId === selectedOperatorId)
+    ? allMessages.filter(
+        (msg) =>
+          msg.senderId === selectedOperatorId || // Message sent BY the operator
+          msg.recipientId === selectedOperatorId || // Message sent TO the operator
+          (msg.senderRole === "admin" && msg.recipientId === selectedOperatorId), // Explicitly ensuring admin messages to this op are shown
+      )
     : []
 
   const filteredOperators = operators.filter(
