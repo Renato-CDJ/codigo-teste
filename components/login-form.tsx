@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback, useMemo, memo } from "react"
+import { useState, useCallback, memo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
-import { AlertCircle, User, Lock, Sun, Moon } from 'lucide-react'
+import { AlertCircle, User, Lock, Sun, Moon } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTheme } from "next-themes"
 
@@ -33,29 +33,39 @@ export const LoginForm = memo(function LoginForm() {
       setError("")
       setIsLoading(true)
 
+      if (!supabase) {
+        setError("Erro de configuração: Cliente Supabase não inicializado.")
+        setIsLoading(false)
+        return
+      }
+
       try {
+        const email = username.includes("@") ? username : `${username}@crm.local`
+
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email: username, // Assuming username input is email for now, or we need a lookup
+          email: email,
           password: password,
         })
 
         if (signInError) {
-          if (!username.includes("@")) {
-            setError("Por favor, use seu e-mail para fazer login.")
-          } else {
+          if (signInError.message === "Failed to fetch") {
+            setError("Erro de conexão. Verifique sua internet ou as configurações do projeto.")
+          } else if (signInError.message.includes("Invalid login credentials")) {
             setError("Usuário ou senha incorretos")
+          } else {
+            setError(signInError.message) // Show actual error for debugging if needed
           }
         } else {
           if (data.user) {
             await supabase
               .from("users")
-              .update({ 
+              .update({
                 last_login_at: new Date().toISOString(),
-                is_online: true 
+                is_online: true,
               })
               .eq("id", data.user.id)
           }
-          
+
           await refreshUser()
         }
       } catch (err) {
@@ -71,6 +81,21 @@ export const LoginForm = memo(function LoginForm() {
   const toggleTheme = useCallback(() => {
     setTheme(theme === "dark" ? "light" : "dark")
   }, [theme, setTheme])
+
+  const handleSeedUsers = async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch("/api/seed", { method: "POST" })
+      const data = await res.json()
+      console.log("Seed results:", data)
+      alert("Usuários padrão verificados/criados com sucesso! Tente fazer login.")
+    } catch (error) {
+      console.error("Seed error:", error)
+      alert("Erro ao criar usuários.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <Card className="w-full max-w-md bg-gradient-to-br from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-2xl backdrop-blur-sm transition-all duration-300 hover:shadow-[0_20px_60px_rgba(249,115,22,0.4)] hover:scale-[1.02] relative overflow-hidden">
@@ -109,7 +134,7 @@ export const LoginForm = memo(function LoginForm() {
               <Input
                 id="username"
                 type="text"
-                placeholder="Digite seu usuário ou e-mail"
+                placeholder="Digite seu usuário (ex: admin)"
                 value={username}
                 onChange={(e) => handleUsernameChange(e.target.value)}
                 required
@@ -169,6 +194,16 @@ export const LoginForm = memo(function LoginForm() {
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
           </Button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={handleSeedUsers}
+              className="text-xs text-zinc-400 hover:text-orange-500 underline"
+            >
+              Restaurar Acessos Padrão
+            </button>
+          </div>
         </form>
       </CardContent>
     </Card>

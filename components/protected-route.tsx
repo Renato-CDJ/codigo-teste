@@ -19,7 +19,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
-        router.push("/")
+        // Ideally, this component is only used on protected pages.
+        // If we are already on the login page (which shouldn't happen if this component is used correctly), don't push.
+        if (window.location.pathname !== "/") {
+          router.push("/")
+        }
       } else if (!allowedRoles.includes(user.role)) {
         // Redirect to appropriate dashboard if wrong role
         router.push(user.role === "admin" ? "/admin" : "/operator")

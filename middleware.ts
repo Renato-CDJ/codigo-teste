@@ -1,8 +1,17 @@
-import { type NextRequest } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // to prevent infinite loops on the root path when session state is unstable.
+  if (request.nextUrl.pathname === "/" || request.nextUrl.pathname.startsWith("/api")) {
+    return NextResponse.next()
+  }
+
+  try {
+    return await updateSession(request)
+  } catch (e) {
+    return NextResponse.next()
+  }
 }
 
 export const config = {

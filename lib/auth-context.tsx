@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode, useMemo, useCallback } from "react"
 import type { User } from "./types"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 
 interface AuthContextType {
   user: User | null
@@ -17,17 +17,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
   const fetchUser = useCallback(async () => {
+    if (!supabase) {
+      setIsLoading(false)
+      return
+    }
+
     try {
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser()
 
       if (authUser) {
-        // Fetch additional user data from our users table
         const { data: userData, error } = await supabase.from("users").select("*").eq("id", authUser.id).single()
 
         if (userData && !error) {
@@ -37,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             lastLoginAt: userData.last_login_at ? new Date(userData.last_login_at) : undefined,
           })
         } else {
-          // If user exists in Auth but not in our table (shouldn't happen with proper setup)
           setUser(null)
         }
       } else {
@@ -52,6 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase])
 
   useEffect(() => {
+    if (!supabase) {
+      setIsLoading(false)
+      return
+    }
+
     fetchUser()
 
     const {
@@ -71,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchUser, supabase])
 
   const logout = useCallback(async () => {
+    if (!supabase) return
     await supabase.auth.signOut()
     setUser(null)
     router.push("/")
