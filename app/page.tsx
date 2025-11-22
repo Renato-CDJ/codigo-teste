@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { LoginForm } from "@/components/login-form"
-import { Button } from "@/components/ui/button"
 // import { MouseTrail } from "@/components/mouse-trail"
 
 export default function HomePage() {
@@ -12,7 +11,16 @@ export default function HomePage() {
   const router = useRouter()
   const [showTitle, setShowTitle] = useState(false)
 
-  // Now the user must explicitly click the button to go to the dashboard.
+  useEffect(() => {
+    if (!isLoading && user) {
+      // Redirect based on role
+      if (user.role === "admin") {
+        router.push("/admin")
+      } else {
+        router.push("/operator")
+      }
+    }
+  }, [user, isLoading, router])
 
   useEffect(() => {
     const timer = setTimeout(() => setShowTitle(true), 100)
@@ -31,41 +39,7 @@ export default function HomePage() {
   }
 
   if (user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-orange-50/20 to-amber-50/20 dark:from-zinc-900 dark:to-zinc-950 p-4">
-        <div className="max-w-md w-full text-center space-y-6 animate-fade-in">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Bem-vindo de volta!</h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Você já está conectado como{" "}
-            <span className="font-mono font-bold text-orange-500">{user.username || user.email}</span>
-          </p>
-
-          <div className="flex flex-col gap-4">
-            <Button
-              size="lg"
-              className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold shadow-lg hover:shadow-orange-500/25 transition-all"
-              onClick={() => router.push(user.role === "admin" ? "/admin" : "/operator")}
-            >
-              Ir para o Painel {user.role === "admin" ? "Admin" : "Operador"}
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 bg-transparent"
-              onClick={() =>
-                import("@/lib/supabase/client").then(({ createClient }) =>
-                  createClient()
-                    ?.auth.signOut()
-                    .then(() => window.location.reload()),
-                )
-              }
-            >
-              Sair da conta
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
+    return null // Will redirect
   }
 
   return (
